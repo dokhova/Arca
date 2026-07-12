@@ -25,50 +25,41 @@ export default function CardDetailScreen({
 
   return (
     <div style={{ position: "relative", minHeight: "100dvh" }}>
-      <img
-        src={cardImage(card)}
-        alt={card.name}
-        style={{
-          position: "fixed",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          objectPosition: "50% 30%",
-          transform: "scale(1.22)",
-          transformOrigin: "top center",
-          pointerEvents: "none",
-        }}
-      />
       <div
+        aria-hidden
         style={{
           position: "fixed",
-          inset: 0,
+          inset: "-10%",
+          zIndex: 0,
           pointerEvents: "none",
-          backdropFilter: "blur(32px)",
-          WebkitBackdropFilter: "blur(32px)",
-          maskImage:
-            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
         }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          background:
-            "linear-gradient(to bottom, transparent 44%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.62) 100%)",
-        }}
-      />
+      >
+        <img
+          src={cardImage(card)}
+          alt=""
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "blur(60px) saturate(1.3) brightness(0.45)",
+            transform: "scale(1.2)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.25)",
+          }}
+        />
+      </div>
 
       <button
         onClick={onBack}
         aria-label="Назад"
         style={{
           position: "fixed",
-          zIndex: 1,
+          zIndex: 2,
           top: "calc(20px + env(safe-area-inset-top, 40px))",
           left: 20,
           width: 44,
@@ -88,12 +79,42 @@ export default function CardDetailScreen({
         <ChevronLeft size={24} />
       </button>
 
-      <div
-        style={{
-          position: "relative",
-          padding: "58dvh 20px 40px",
-        }}
-      >
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "54dvh",
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={cardImage(card)}
+            alt={card.name}
+            style={{
+              position: "absolute",
+              inset: "-3%",
+              width: "106%",
+              height: "106%",
+              objectFit: "cover",
+              objectPosition: "50% 22%",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 80,
+              pointerEvents: "none",
+              background:
+                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.35))",
+            }}
+          />
+        </div>
+
+        <div style={{ padding: "20px 20px 40px" }}>
         <h1
           style={{
             margin: 0,
@@ -130,19 +151,20 @@ export default function CardDetailScreen({
           ))}
         </div>
 
-        {paragraphs.map((paragraph, index) => (
-          <p
-            key={index}
-            style={{
-              margin: index === 0 ? "20px 0 0" : "16px 0 0",
-              fontSize: 17,
-              lineHeight: 1.5,
-              color: "var(--text-body)",
-            }}
-          >
-            {paragraph}
-          </p>
-        ))}
+          {paragraphs.map((paragraph, index) => (
+            <p
+              key={index}
+              style={{
+                margin: index === 0 ? "20px 0 0" : "16px 0 0",
+                fontSize: 17,
+                lineHeight: 1.5,
+                color: "var(--text-body)",
+              }}
+            >
+              {paragraph}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );

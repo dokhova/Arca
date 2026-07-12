@@ -32,7 +32,7 @@ export default function AppBackground({ showMoon }: { showMoon: boolean }) {
 
       {showMoon && (
         <img
-          src="/moon.png"
+          src="/moon.webp"
           alt=""
           style={{
             position: "absolute",

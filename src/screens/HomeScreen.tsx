@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Sun, Moon, ChevronDown } from "lucide-react";
 import type { Screen } from "../App";
 import { getCardOfDay, cardImage } from "../data/daily";
@@ -16,6 +16,10 @@ export default function HomeScreen({
 
   const card = getCardOfDay();
   const extra = dailyExtras[card.slug];
+
+  useEffect(() => {
+    new Image().src = cardImage(getCardOfDay());
+  }, []);
 
   const adviceText = extra?.advice ?? card.dailyAdvice;
   const ritualTitle = extra?.ritualTitle ?? "Ритуал дня";
