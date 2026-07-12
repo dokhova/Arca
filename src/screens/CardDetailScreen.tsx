@@ -41,7 +41,7 @@ export default function CardDetailScreen({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "blur(60px) saturate(1.3) brightness(0.45)",
+            filter: "blur(48px) saturate(1.2) brightness(0.6)",
             transform: "scale(1.2)",
           }}
         />
@@ -49,7 +49,8 @@ export default function CardDetailScreen({
           style={{
             position: "absolute",
             inset: 0,
-            background: "rgba(0,0,0,0.25)",
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.45))",
           }}
         />
       </div>
@@ -93,11 +94,11 @@ export default function CardDetailScreen({
             alt={card.name}
             style={{
               position: "absolute",
-              inset: "-3%",
-              width: "106%",
-              height: "106%",
+              inset: "-6%",
+              width: "112%",
+              height: "112%",
               objectFit: "cover",
-              objectPosition: "50% 22%",
+              objectPosition: "50% 20%",
             }}
           />
           <div
@@ -107,14 +108,14 @@ export default function CardDetailScreen({
               right: 0,
               bottom: 0,
               width: "100%",
-              height: 96,
+              height: 160,
               pointerEvents: "none",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
+              backdropFilter: "blur(26px)",
+              WebkitBackdropFilter: "blur(26px)",
               maskImage:
-                "linear-gradient(to bottom, transparent, black 85%)",
+                "linear-gradient(to bottom, transparent, black 70%)",
               WebkitMaskImage:
-                "linear-gradient(to bottom, transparent, black 85%)",
+                "linear-gradient(to bottom, transparent, black 70%)",
             }}
           />
           <div
@@ -124,10 +125,10 @@ export default function CardDetailScreen({
               right: 0,
               bottom: 0,
               width: "100%",
-              height: 120,
+              height: 160,
               pointerEvents: "none",
               background:
-                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.45) 100%)",
+                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.35))",
             }}
           />
         </div>
@@ -136,7 +137,7 @@ export default function CardDetailScreen({
           style={{
             position: "relative",
             zIndex: 2,
-            marginTop: -44,
+            marginTop: -64,
             padding: "20px 20px 40px",
           }}
         >
@@ -159,7 +160,7 @@ export default function CardDetailScreen({
             marginTop: 14,
           }}
         >
-          {card.tags.map((tag) => (
+          {card.tags.slice(0, 2).map((tag) => (
             <span
               key={tag}
               style={{

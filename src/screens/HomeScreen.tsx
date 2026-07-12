@@ -79,14 +79,14 @@ export default function HomeScreen({
       <Widget
         icon={<Sun size={24} color="var(--accent)" />}
         title="Ежедневный совет"
-        subtitle="Короткий совет от карты дня"
+        subtitle="Совет от карты дня"
         style={{ marginTop: 24 }}
         onClick={() => setPopup("advice")}
       />
       <Widget
         icon={<Moon size={24} color="var(--accent)" />}
         title="Ритуал дня"
-        subtitle="Простое действие на сегодня"
+        subtitle="Действие на сегодня"
         style={{ marginTop: 16 }}
         onClick={() => setPopup("ritual")}
       />

@@ -175,7 +175,7 @@ export default function CatalogScreen({
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {card.tags.join(" · ")}
+                      {card.tags.slice(0, 2).join(" · ")}
                     </span>
                   </span>
                   <ChevronRight
