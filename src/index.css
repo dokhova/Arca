@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* ============================================
+   ARCA — дизайн-токены тёмной темы
+   Единственный источник правды по цветам.
+   Менять цвета — только здесь.
+   ============================================ */
+:root {
+  /* Фон */
+  --bg-base: #17100a;
+  --bg-glow: rgba(240, 169, 60, 0.35);
+
+  /* Текст */
+  --text-primary: #ffffff;
+  --text-secondary: #c4b49a;
+  --text-body: #ede6da;
+
+  /* Акцент */
+  --accent: #f0a93c;
+
+  /* Светлая карточка («Карта дня») */
+  --card-light-from: #f7e3b6;
+  --card-light-to: #e8bc7c;
+
+  /* Бронзовая карточка («Разбор карт») */
+  --card-bronze-from: #dca963;
+  --card-bronze-to: #8a5c2a;
+
+  /* Текст на светлых карточках */
+  --card-dark-text: #1e1408;
+
+  /* Тёмные поверхности (виджеты) */
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --icon-circle: rgba(240, 169, 60, 0.16);
+
+  /* Чипы-теги */
+  --chip-bg: #e9be6c;
+
+  /* Навигация */
+  --nav-bg: rgba(23, 16, 10, 0.85);
+  --nav-inactive: #8a7d6a;
+
+  /* Радиусы */
+  --radius-card: 24px;
+  --radius-small: 20px;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100dvh;
+}
