@@ -29,20 +29,23 @@ export default function CardDetailScreen({
         aria-hidden
         style={{
           position: "fixed",
-          inset: "-10%",
+          inset: 0,
           zIndex: 0,
           pointerEvents: "none",
+          overflow: "hidden",
         }}
       >
         <img
           src={cardImage(card)}
           alt=""
           style={{
-            width: "100%",
-            height: "100%",
+            position: "absolute",
+            top: "-10%",
+            left: "-10%",
+            width: "120%",
+            height: "120%",
             objectFit: "cover",
             filter: "blur(48px) saturate(1.2) brightness(0.6)",
-            transform: "scale(1.2)",
           }}
         />
         <div
@@ -84,7 +87,6 @@ export default function CardDetailScreen({
         <div
           style={{
             position: "relative",
-            width: "100%",
             height: "54dvh",
             overflow: "hidden",
           }}
@@ -94,7 +96,8 @@ export default function CardDetailScreen({
             alt={card.name}
             style={{
               position: "absolute",
-              inset: "-6%",
+              top: "-6%",
+              left: "-6%",
               width: "112%",
               height: "112%",
               objectFit: "cover",
@@ -107,9 +110,7 @@ export default function CardDetailScreen({
               left: 0,
               right: 0,
               bottom: 0,
-              width: "100%",
               height: 160,
-              pointerEvents: "none",
               backdropFilter: "blur(26px)",
               WebkitBackdropFilter: "blur(26px)",
               maskImage:
@@ -124,9 +125,7 @@ export default function CardDetailScreen({
               left: 0,
               right: 0,
               bottom: 0,
-              width: "100%",
               height: 160,
-              pointerEvents: "none",
               background:
                 "linear-gradient(to bottom, transparent, rgba(0,0,0,0.35))",
             }}
@@ -138,7 +137,7 @@ export default function CardDetailScreen({
             position: "relative",
             zIndex: 2,
             marginTop: -64,
-            padding: "20px 20px 40px",
+            padding: "0 20px 40px",
           }}
         >
         <h1
