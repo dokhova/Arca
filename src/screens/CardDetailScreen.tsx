@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { getBySlug } from "../data/cards";
+import { cardImage } from "../data/daily";
 
 export default function CardDetailScreen({
   slug,
@@ -25,7 +26,7 @@ export default function CardDetailScreen({
   return (
     <div style={{ position: "relative", minHeight: "100dvh" }}>
       <img
-        src={`/cards/${card.image}`}
+        src={cardImage(card)}
         alt={card.name}
         style={{
           position: "fixed",
@@ -33,8 +34,8 @@ export default function CardDetailScreen({
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          objectPosition: "50% 25%",
-          transform: "scale(1.15)",
+          objectPosition: "50% 30%",
+          transform: "scale(1.22)",
           transformOrigin: "top center",
           pointerEvents: "none",
         }}
@@ -47,9 +48,9 @@ export default function CardDetailScreen({
           backdropFilter: "blur(32px)",
           WebkitBackdropFilter: "blur(32px)",
           maskImage:
-            "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 44%, black 52%)",
+            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
           WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 44%, black 52%)",
+            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
         }}
       />
       <div
@@ -58,7 +59,7 @@ export default function CardDetailScreen({
           inset: 0,
           pointerEvents: "none",
           background:
-            "linear-gradient(to bottom, transparent 34%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.62) 100%)",
+            "linear-gradient(to bottom, transparent 44%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.62) 100%)",
         }}
       />
 
@@ -90,7 +91,7 @@ export default function CardDetailScreen({
       <div
         style={{
           position: "relative",
-          padding: "48dvh 20px 40px",
+          padding: "58dvh 20px 40px",
         }}
       >
         <h1

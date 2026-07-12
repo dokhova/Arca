@@ -13,7 +13,10 @@ export function getCardOfDay(date = new Date()): TarotCard {
   return cards[index];
 }
 
-/** Путь к изображению карты: public/cards/ + поле image из данных */
 export function cardImage(card: TarotCard): string {
-  return `/cards/${card.image}`;
+  return `/cards/webp/${card.slug}.webp`;
+}
+
+export function cardThumb(card: TarotCard): string {
+  return `/cards/thumbs/${card.slug}.webp`;
 }

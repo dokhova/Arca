@@ -20,8 +20,8 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          objectPosition: "50% 25%",
-          transform: "scale(1.15)",
+          objectPosition: "50% 30%",
+          transform: "scale(1.22)",
           transformOrigin: "top center",
           pointerEvents: "none",
         }}
@@ -34,9 +34,9 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
           backdropFilter: "blur(32px)",
           WebkitBackdropFilter: "blur(32px)",
           maskImage:
-            "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 44%, black 52%)",
+            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
           WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 44%, black 52%)",
+            "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 54%, black 62%)",
         }}
       />
       <div
@@ -45,7 +45,7 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
           inset: 0,
           pointerEvents: "none",
           background:
-            "linear-gradient(to bottom, transparent 34%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.62) 100%)",
+            "linear-gradient(to bottom, transparent 44%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.62) 100%)",
         }}
       />
 
@@ -79,42 +79,19 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
       <div
         style={{
           position: "relative",
-          padding: "48dvh 20px 40px",
+          padding: "58dvh 20px 40px",
         }}
       >
-        <div
+        <h1
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            flexWrap: "wrap",
+            margin: 0,
+            fontSize: 32,
+            fontWeight: 700,
+            color: "var(--text-primary)",
           }}
         >
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 32,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-            }}
-          >
-            {card.name}
-          </h1>
-          <span
-            style={{
-              background: "rgba(0,0,0,0.45)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              color: "var(--accent)",
-              fontSize: 13,
-              fontWeight: 600,
-              padding: "6px 12px",
-              borderRadius: 999,
-            }}
-          >
-            Карта дня
-          </span>
-        </div>
+          {card.name}
+        </h1>
 
         {/* Чипы-теги */}
         <div

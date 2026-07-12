@@ -90,22 +90,24 @@ export default function HomeScreen({
       {/* Попапы */}
       <DailyPopup
         open={popup === "advice"}
-        icon={<Sun size={22} color="var(--accent)" />}
+        icon={<Sun size={22} />}
         eyebrow="Совет дня"
         cardName={card.name}
         title={card.name}
         imageSrc={cardImage(card)}
         text={adviceText}
+        variant="advice"
         onClose={() => setPopup(null)}
       />
       <DailyPopup
         open={popup === "ritual"}
-        icon={<Moon size={22} color="var(--accent)" />}
+        icon={<Moon size={22} />}
         eyebrow="Ритуал дня"
         cardName={card.name}
         title={ritualTitle}
         imageSrc={cardImage(card)}
         text={ritualText}
+        variant="ritual"
         onClose={() => setPopup(null)}
       />
     </div>

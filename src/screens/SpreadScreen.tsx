@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, Moon, Sparkles } from "lucide-react";
 import { cards, getBySlug, type TarotCard } from "../data/cards";
+import { cardImage } from "../data/daily";
 
 type SpreadType = 1 | 3;
 
@@ -283,7 +284,7 @@ export default function SpreadScreen({ onBack }: { onBack: () => void }) {
               color: "var(--accent)",
             }}
           >
-            Например: «На что мне обратить внимание в…»
+            Например: «Что мне поможет продвинуться в работе?»
           </div>
         </div>
       )}
@@ -364,7 +365,7 @@ export default function SpreadScreen({ onBack }: { onBack: () => void }) {
                       }}
                     >
                       <img
-                        src={`/cards/${card.image}`}
+                        src={cardImage(card)}
                         alt={card.name}
                         style={{
                           width: "100%",

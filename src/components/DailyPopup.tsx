@@ -9,6 +9,7 @@ export default function DailyPopup({
   title,
   imageSrc,
   text,
+  variant,
   onClose,
 }: {
   open: boolean;
@@ -18,6 +19,7 @@ export default function DailyPopup({
   title: string;
   imageSrc: string;
   text: string;
+  variant: "advice" | "ritual";
   onClose: () => void;
 }) {
   if (!open) return null;
@@ -73,6 +75,17 @@ export default function DailyPopup({
               transform: "scale(1.15)",
             }}
           />
+          {variant === "ritual" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                background:
+                  "linear-gradient(to bottom, rgba(20,28,44,0.25), rgba(20,28,44,0.45))",
+              }}
+            />
+          )}
           <div
             style={{
               position: "absolute",
@@ -115,11 +128,15 @@ export default function DailyPopup({
                 width: 36,
                 height: 36,
                 borderRadius: "50%",
-                background: "var(--icon-circle)",
+                background:
+                  variant === "ritual"
+                    ? "rgba(199,213,232,0.14)"
+                    : "var(--icon-circle)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
+                color: variant === "ritual" ? "#C7D5E8" : "var(--accent)",
               }}
             >
               {icon}
@@ -128,7 +145,7 @@ export default function DailyPopup({
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: "var(--accent)",
+                color: variant === "ritual" ? "#C7D5E8" : "var(--accent)",
               }}
             >
               {eyebrow}

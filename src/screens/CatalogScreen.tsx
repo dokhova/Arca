@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { cards } from "../data/cards";
+import { cardThumb } from "../data/daily";
 
 const GROUPS = ["Старшие арканы", "Жезлы", "Кубки", "Мечи", "Пентакли"];
 const ALL_CARDS = "Все";
@@ -141,7 +142,7 @@ export default function CatalogScreen({
                     }}
                   >
                     <img
-                      src={`/cards/${card.image}`}
+                      src={cardThumb(card)}
                       alt={card.name}
                       style={{
                         width: "100%",
