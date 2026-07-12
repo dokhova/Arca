@@ -36,9 +36,9 @@ export default function AppBackground({ showMoon }: { showMoon: boolean }) {
           alt=""
           style={{
             position: "absolute",
-            top: "-14vw",
-            right: "-22vw",
-            width: "72vw",
+            top: "-8vw",
+            right: "-12vw",
+            width: "78vw",
             objectFit: "contain",
           }}
         />

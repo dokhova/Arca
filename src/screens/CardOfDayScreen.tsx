@@ -93,15 +93,40 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
               left: 0,
               right: 0,
               bottom: 0,
-              height: 80,
+              width: "100%",
+              height: 96,
+              pointerEvents: "none",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              maskImage:
+                "linear-gradient(to bottom, transparent, black 85%)",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, transparent, black 85%)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: "100%",
+              height: 120,
               pointerEvents: "none",
               background:
-                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.35))",
+                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.45) 100%)",
             }}
           />
         </div>
 
-        <div style={{ padding: "20px 20px 40px" }}>
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            marginTop: -44,
+            padding: "20px 20px 40px",
+          }}
+        >
         <h1
           style={{
             margin: 0,

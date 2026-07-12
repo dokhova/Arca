@@ -8,3 +8,10 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>,
 );
+
+const tg = window.Telegram?.WebApp;
+tg?.ready?.();
+tg?.expand?.();
+tg?.setHeaderColor?.("#17100A");
+tg?.setBackgroundColor?.("#17100A");
+tg?.setBottomBarColor?.("#17100A");
