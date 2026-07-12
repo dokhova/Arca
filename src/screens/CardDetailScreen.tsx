@@ -87,8 +87,12 @@ export default function CardDetailScreen({
         <div
           style={{
             position: "relative",
-            height: "54dvh",
+            height: "56dvh",
             overflow: "hidden",
+            maskImage:
+              "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
           }}
         >
           <img
@@ -96,38 +100,12 @@ export default function CardDetailScreen({
             alt={card.name}
             style={{
               position: "absolute",
-              top: "-6%",
-              left: "-6%",
-              width: "112%",
-              height: "112%",
+              top: "-8%",
+              left: "-8%",
+              width: "116%",
+              height: "116%",
               objectFit: "cover",
               objectPosition: "50% 20%",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 160,
-              backdropFilter: "blur(26px)",
-              WebkitBackdropFilter: "blur(26px)",
-              maskImage:
-                "linear-gradient(to bottom, transparent, black 70%)",
-              WebkitMaskImage:
-                "linear-gradient(to bottom, transparent, black 70%)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 160,
-              background:
-                "linear-gradient(to bottom, transparent, rgba(0,0,0,0.35))",
             }}
           />
         </div>
@@ -136,7 +114,7 @@ export default function CardDetailScreen({
           style={{
             position: "relative",
             zIndex: 2,
-            marginTop: -64,
+            marginTop: -96,
             padding: "0 20px 40px",
           }}
         >
