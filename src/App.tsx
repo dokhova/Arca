@@ -6,6 +6,7 @@ import CardOfDayScreen from "./screens/CardOfDayScreen";
 import CatalogScreen from "./screens/CatalogScreen";
 import CardDetailScreen from "./screens/CardDetailScreen";
 import SpreadScreen from "./screens/SpreadScreen";
+import SpreadChatScreen from "./screens/SpreadChatScreen";
 
 /**
  * АРХИТЕКТУРА СЛОЁВ — НЕ МЕНЯТЬ:
@@ -23,10 +24,12 @@ export type Screen =
   | "cardOfDay"
   | "cardDetail"
   | "spread"
+  | "spreadChat"
   | "catalog";
 
 const TAB_SCREENS: Record<Tab, Screen> = {
   home: "home",
+  spreads: "spreadChat",
   catalog: "catalog",
 };
 
@@ -35,9 +38,15 @@ export default function App() {
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
 
   // Нижняя навигация видна только на корневых экранах табов
-  const isRootScreen = screen === "home" || screen === "catalog";
+  const isRootScreen =
+    screen === "home" || screen === "catalog" || screen === "spreadChat";
 
-  const activeTab: Tab = screen === "catalog" ? "catalog" : "home";
+  const activeTab: Tab =
+    screen === "catalog"
+      ? "catalog"
+      : screen === "spreadChat"
+        ? "spreads"
+        : "home";
 
   return (
     <>
@@ -51,6 +60,7 @@ export default function App() {
         {screen === "spread" && (
           <SpreadScreen onBack={() => setScreen("home")} />
         )}
+        {screen === "spreadChat" && <SpreadChatScreen />}
         {screen === "catalog" && (
           <CatalogScreen
             onOpenCard={(slug) => {

@@ -1,6 +1,6 @@
 import { Home } from "lucide-react";
 
-export type Tab = "home" | "catalog";
+export type Tab = "home" | "spreads" | "catalog";
 
 function CardsIcon({
   size = 24,
@@ -34,8 +34,34 @@ function CardsIcon({
   );
 }
 
+function AiIcon({
+  size = 24,
+  strokeWidth = 1.8,
+}: {
+  size?: number;
+  strokeWidth?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6 C12.6 9 15 11.4 18 12 C15 12.6 12.6 15 12 18 C11.4 15 9 12.6 6 12 C9 11.4 11.4 9 12 6 Z" />
+    </svg>
+  );
+}
+
 const TABS = [
   { id: "home", label: "Главная", icon: Home },
+  { id: "spreads", label: "Расклады", icon: AiIcon },
   { id: "catalog", label: "Каталог", icon: CardsIcon },
 ] as const;
 
@@ -55,7 +81,7 @@ export default function BottomNav({
         bottom: 0,
         zIndex: 10,
         display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
+        gridTemplateColumns: "repeat(3, 1fr)",
         background: "var(--nav-bg)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
