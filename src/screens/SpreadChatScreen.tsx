@@ -22,14 +22,27 @@ export default function SpreadChatScreen() {
   const [input, setInput] = useState("");
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [typingText, setTypingText] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingIntervalRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
   const firstName = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, typingText]);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (typingIntervalRef.current !== null) {
+        window.clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -44,7 +57,7 @@ export default function SpreadChatScreen() {
   };
 
   const handleSend = async () => {
-    if (loading || (!input.trim() && !pendingImage)) return;
+    if (loading || typingText !== null || (!input.trim() && !pendingImage)) return;
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -60,11 +73,31 @@ export default function SpreadChatScreen() {
 
     try {
       const reply = await sendTarotMessage(nextMessages);
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: reply },
-      ]);
+      if (!mountedRef.current) return;
+
+      setLoading(false);
+      setTypingText("");
+      let visibleCharacters = 0;
+
+      typingIntervalRef.current = window.setInterval(() => {
+        const chunkSize = visibleCharacters % 2 === 0 ? 3 : 2;
+        visibleCharacters = Math.min(visibleCharacters + chunkSize, reply.length);
+        setTypingText(reply.slice(0, visibleCharacters));
+
+        if (visibleCharacters === reply.length) {
+          if (typingIntervalRef.current !== null) {
+            window.clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+          }
+          setMessages((current) => [
+            ...current,
+            { role: "assistant", content: reply },
+          ]);
+          setTypingText(null);
+        }
+      }, 30);
     } catch {
+      if (!mountedRef.current) return;
       setMessages((current) => [
         ...current,
         {
@@ -84,17 +117,21 @@ export default function SpreadChatScreen() {
     }
   };
 
-  const canSend = !loading && Boolean(input.trim() || pendingImage);
-  const emptyStateBottomSpace = pendingImage ? 274 : 200;
+  const isTyping = typingText !== null;
+  const canSend = !loading && !isTyping && Boolean(input.trim() || pendingImage);
+  const hideEmptyStateExtras = inputFocused || input.length > 0;
+  const renderedMessages: ChatMessage[] = isTyping
+    ? [...messages, { role: "assistant", content: typingText ?? "" }]
+    : messages;
 
   return (
     <div
       style={{
-        height: "calc(100dvh - 69px - env(safe-area-inset-bottom, 0px))",
-        padding: "calc(16px + env(safe-area-inset-top, 0px)) 20px 0",
-        boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
+        height: "100dvh",
+        boxSizing: "border-box",
+        padding: "0 16px calc(85px + env(safe-area-inset-bottom, 0px))",
       }}
     >
       <style>{`
@@ -116,9 +153,14 @@ export default function SpreadChatScreen() {
           type="button"
           aria-label="Новый чат"
           onClick={() => {
+            if (typingIntervalRef.current !== null) {
+              window.clearInterval(typingIntervalRef.current);
+              typingIntervalRef.current = null;
+            }
             setMessages([]);
             setInput("");
             setPendingImage(null);
+            setTypingText(null);
           }}
           disabled={loading}
           style={{
@@ -148,22 +190,23 @@ export default function SpreadChatScreen() {
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          overflow: messages.length === 0 ? "hidden" : "auto",
           scrollbarWidth: "none",
-          padding: `0 0 ${
-            messages.length === 0
-              ? emptyStateBottomSpace
-              : pendingImage
-                ? 174
-                : 94
-          }px`,
+          paddingTop:
+            messages.length > 0
+              ? "calc(env(safe-area-inset-top, 0px) + 64px)"
+              : 0,
+          paddingBottom: messages.length > 0 ? 16 : 0,
         }}
       >
         {messages.length === 0 ? (
           <div
             style={{
-              height: `calc(100% - ${emptyStateBottomSpace}px)`,
-              minHeight: 280,
+              flex: 1,
+              minHeight: 0,
+              overflow: "hidden",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -205,20 +248,22 @@ export default function SpreadChatScreen() {
             >
               {firstName ? `Привет, ${firstName}!` : "Привет!"}
             </h1>
-            <p
-              style={{
-                margin: "8px 0 0",
-                fontSize: 17,
-                lineHeight: 1.45,
-                color: "var(--text-secondary)",
-              }}
-            >
-              Я помогу интерпретировать твой расклад таро
-            </p>
+            {!hideEmptyStateExtras && (
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 17,
+                  lineHeight: 1.45,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Я помогу интерпретировать твой расклад таро
+              </p>
+            )}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            {messages.map((message, index) => {
+            {renderedMessages.map((message, index) => {
               const isUser = message.role === "user";
 
               if (!isUser) {
@@ -316,11 +361,7 @@ export default function SpreadChatScreen() {
 
       <div
         style={{
-          position: "fixed",
-          left: 16,
-          right: 16,
-          bottom: "calc(85px + env(safe-area-inset-bottom, 0px))",
-          zIndex: 9,
+          flexShrink: 0,
         }}
       >
         {pendingImage && (
@@ -371,7 +412,7 @@ export default function SpreadChatScreen() {
           </div>
         )}
 
-        {messages.length === 0 && (
+        {messages.length === 0 && !hideEmptyStateExtras && (
           <div
             className="spread-chat-suggestions"
             style={{
@@ -479,6 +520,8 @@ export default function SpreadChatScreen() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             placeholder="Напиши сообщение"
             rows={1}
             style={{
