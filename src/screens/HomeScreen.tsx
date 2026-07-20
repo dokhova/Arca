@@ -21,7 +21,7 @@ export default function HomeScreen({
     new Image().src = cardImage(getCardOfDay());
   }, []);
 
-  const adviceText = extra?.advice ?? card.dailyAdvice;
+  const adviceText = card.dailyAdvice || extra?.advice || "";
   const ritualTitle = extra?.ritualTitle ?? "Ритуал дня";
   const ritualText =
     extra?.ritualText ?? "Проведите несколько минут в тишине, наблюдая за дыханием.";

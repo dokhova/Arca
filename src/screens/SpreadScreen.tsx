@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, Moon, Sparkles } from "lucide-react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { ChevronLeft } from "lucide-react";
 import { cards, getBySlug, type TarotCard } from "../data/cards";
 import { cardImage } from "../data/daily";
 
@@ -53,6 +53,10 @@ function loadSpread(): StoredSpread {
 }
 
 function CardBack({ style }: { style?: CSSProperties }) {
+  const maskId = useId();
+  const cx = 60;
+  const cy = 110;
+  const rayAngles = [-78, -58, -40, -24, -9, 9, 24, 40, 58, 78];
   return (
     <div
       style={{
@@ -62,19 +66,48 @@ function CardBack({ style }: { style?: CSSProperties }) {
         border: "1px solid rgba(240,169,60,0.35)",
         background: "linear-gradient(160deg, #2E2010, #17100A)",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         color: "var(--accent)",
+        overflow: "hidden",
         ...style,
       }}
     >
-      <Moon size={28} />
-      <Sparkles
-        size={14}
-        color="rgba(240,169,60,0.6)"
-        style={{ marginTop: 8 }}
-      />
+      <svg
+        viewBox="0 0 120 220"
+        fill="currentColor"
+        style={{ width: "62%", maxHeight: "84%" }}
+        aria-hidden="true"
+      >
+        {/* длинные вертикальные лучи */}
+        <polygon points="57.5,78 64.5,78 61,14" />
+        <polygon points="57.5,142 64.5,142 61,206" />
+        {/* лучи справа */}
+        {rayAngles.map((deg) => {
+          const a = (deg * Math.PI) / 180;
+          const r0 = 40;
+          const r1 = r0 + (Math.abs(deg) < 30 ? 30 : 20);
+          const w = 3.2;
+          const x0 = cx + r0 * Math.cos(a);
+          const y0 = cy + r0 * Math.sin(a);
+          const x1 = cx + r1 * Math.cos(a);
+          const y1 = cy + r1 * Math.sin(a);
+          const px = -Math.sin(a) * w;
+          const py = Math.cos(a) * w;
+          return (
+            <polygon
+              key={deg}
+              points={`${x0 + px},${y0 + py} ${x0 - px},${y0 - py} ${x1},${y1}`}
+            />
+          );
+        })}
+        {/* полумесяц: круг с вырезом через маску */}
+        <mask id={maskId}>
+          <rect x="0" y="0" width="120" height="220" fill="white" />
+          <circle cx="44" cy="110" r="27" fill="black" />
+        </mask>
+        <circle cx="56" cy="110" r="32" mask={`url(#${maskId})`} />
+      </svg>
     </div>
   );
 }
