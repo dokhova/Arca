@@ -24,10 +24,7 @@ export default function SpreadChatScreen() {
   const [loading, setLoading] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [typingText, setTypingText] = useState<string | null>(null);
-  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const photoMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
@@ -46,26 +43,6 @@ export default function SpreadChatScreen() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!photoMenuOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (photoMenuRef.current?.contains(target)) return;
-      if (
-        target instanceof Element &&
-        target.closest('[data-photo-menu-trigger="true"]')
-      ) {
-        return;
-      }
-      setPhotoMenuOpen(false);
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [photoMenuOpen]);
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -385,77 +362,8 @@ export default function SpreadChatScreen() {
       <div
         style={{
           flexShrink: 0,
-          position: "relative",
         }}
       >
-        {photoMenuOpen && (
-          <div
-            ref={photoMenuRef}
-            role="menu"
-            style={{
-              position: "absolute",
-              left: 0,
-              bottom: 66,
-              zIndex: 10,
-              minWidth: 224,
-              padding: 6,
-              borderRadius: 16,
-              border: "1px solid var(--surface-border)",
-              background: "var(--nav-bg)",
-              boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-            }}
-          >
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setPhotoMenuOpen(false);
-                cameraInputRef.current?.click();
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "11px 12px",
-                border: "none",
-                borderRadius: 11,
-                background: "transparent",
-                color: "var(--text-primary)",
-                font: "inherit",
-                fontSize: 15,
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              📷 Сделать фото
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setPhotoMenuOpen(false);
-                fileInputRef.current?.click();
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "11px 12px",
-                border: "none",
-                borderRadius: 11,
-                background: "transparent",
-                color: "var(--text-primary)",
-                font: "inherit",
-                fontSize: 15,
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              🖼 Выбрать из галереи
-            </button>
-          </div>
-        )}
-
         {pendingImage && (
           <div
             style={{
@@ -546,9 +454,7 @@ export default function SpreadChatScreen() {
             ))}
             <button
               type="button"
-              data-photo-menu-trigger="true"
-              onClick={() => setPhotoMenuOpen((open) => !open)}
-              aria-expanded={photoMenuOpen}
+              onClick={() => fileInputRef.current?.click()}
               style={{
                 flexShrink: 0,
                 width: "fit-content",
@@ -588,21 +494,10 @@ export default function SpreadChatScreen() {
             disabled={loading}
             hidden
           />
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleImageChange}
-            disabled={loading}
-            hidden
-          />
           <button
             type="button"
             aria-label="Добавить фото"
-            data-photo-menu-trigger="true"
-            onClick={() => setPhotoMenuOpen((open) => !open)}
-            aria-expanded={photoMenuOpen}
+            onClick={() => fileInputRef.current?.click()}
             disabled={loading}
             style={{
               width: 42,
