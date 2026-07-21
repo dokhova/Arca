@@ -225,7 +225,7 @@ export default function SpreadChatScreen() {
               }}
             >
               <img
-                src="/ai-orb.png"
+                src="/ai-orb.webp"
                 alt=""
                 draggable={false}
                 style={{
