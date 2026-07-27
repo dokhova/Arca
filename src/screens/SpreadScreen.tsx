@@ -257,7 +257,7 @@ export default function SpreadScreen({ onBack }: { onBack: () => void }) {
           color: "var(--text-primary)",
         }}
       >
-        Разбор карт
+        Расклад карт
       </h1>
 
       <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
