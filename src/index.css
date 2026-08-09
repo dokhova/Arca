@@ -62,3 +62,19 @@ body {
 #root {
   min-height: 100dvh;
 }
+
+/* Запрет копирования контента: отключаем выделение текста и
+   iOS-меню по долгому нажатию. Поля ввода — исключение. */
+html,
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}

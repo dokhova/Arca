@@ -25,15 +25,25 @@ export function getPersonalSeed(): number {
 }
 
 /**
+ * 32-битный микшер (финализатор murmur3). Считает через Math.imul,
+ * поэтому умножение идёт в целых числах и не теряет младшие биты.
+ */
+function hashInt(n: number): number {
+  let h = n | 0;
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+/**
  * Детерминированная «карта дня»: одна и та же карта весь день,
- * меняется в полночь. Не трогает cards.ts — живёт отдельно.
+ * меняется в полночь. Использует все 78 карт равномерно.
  */
 export function getCardOfDay(date = new Date()): TarotCard {
   const dayKey =
     date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
-  let seed = dayKey ^ getPersonalSeed();
-  seed = (seed ^ (seed >> 7)) * 2654435761;
-  const index = Math.abs(seed) % cards.length;
+  const index = hashInt(dayKey ^ hashInt(getPersonalSeed())) % cards.length;
   return cards[index];
 }
 
