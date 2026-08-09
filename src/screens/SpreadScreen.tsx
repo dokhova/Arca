@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft } from "lucide-react";
 import { cards, getBySlug, type TarotCard } from "../data/cards";
 import { cardImage } from "../data/daily";
+import { trackSpreadCompleted } from "../lib/analytics";
 
 type SpreadType = 1 | 3;
 
@@ -172,6 +173,12 @@ export default function SpreadScreen({ onBack }: { onBack: () => void }) {
   const drawnCount = slots.length;
   const allDrawn = drawnCount === spreadType;
   const allRevealed = allDrawn && slots.every((slot) => slot.revealed);
+
+  useEffect(() => {
+    if (allRevealed) {
+      trackSpreadCompleted(spreadType, slots.map((s) => s.slug));
+    }
+  }, [allRevealed, spreadType, slots]);
 
   const clearRevealTimers = () => {
     revealTimers.current.forEach((timer) => clearTimeout(timer));

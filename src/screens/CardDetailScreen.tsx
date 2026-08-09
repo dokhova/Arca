@@ -1,7 +1,8 @@
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { getBySlug } from "../data/cards";
 import { cardImage } from "../data/daily";
+import { trackCardViewed } from "../lib/analytics";
 
 export default function CardDetailScreen({
   slug,
@@ -15,6 +16,10 @@ export default function CardDetailScreen({
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (card) trackCardViewed(card, "catalog");
+  }, [card?.slug]);
 
   if (!card) return null;
 

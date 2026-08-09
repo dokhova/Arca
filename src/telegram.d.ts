@@ -1,6 +1,8 @@
 /** Минимальные типы Telegram Mini App — только то, что используем. */
 interface TelegramWebAppUser {
+  id?: number;
   first_name?: string;
+  username?: string;
 }
 
 interface TelegramWebApp {

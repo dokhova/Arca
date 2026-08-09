@@ -11,6 +11,7 @@ import {
   sendTarotMessage,
   type ChatMessage,
 } from "../lib/tarotChat";
+import { trackAiChatMessageSent } from "../lib/analytics";
 
 const QUICK_PROMPTS = [
   { label: "Разобрать расклад", value: "Разбери мой расклад: " },
@@ -58,6 +59,8 @@ export default function SpreadChatScreen() {
 
   const handleSend = async () => {
     if (loading || typingText !== null || (!input.trim() && !pendingImage)) return;
+
+    trackAiChatMessageSent(Boolean(pendingImage), input.trim().length);
 
     const userMessage: ChatMessage = {
       role: "user",

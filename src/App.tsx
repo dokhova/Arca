@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppBackground from "./components/AppBackground";
 import BottomNav, { type Tab } from "./components/BottomNav";
+import { trackScreen } from "./lib/analytics";
 import HomeScreen from "./screens/HomeScreen";
 import CardOfDayScreen from "./screens/CardOfDayScreen";
 import CatalogScreen from "./screens/CatalogScreen";
@@ -36,6 +37,10 @@ const TAB_SCREENS: Record<Tab, Screen> = {
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    trackScreen(screen);
+  }, [screen]);
 
   // Нижняя навигация видна только на корневых экранах табов
   const isRootScreen =

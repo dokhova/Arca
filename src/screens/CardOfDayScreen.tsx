@@ -1,8 +1,14 @@
+import { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { getCardOfDay, cardImage } from "../data/daily";
+import { trackCardOfDayOpened } from "../lib/analytics";
 
 export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
   const card = getCardOfDay();
+
+  useEffect(() => {
+    trackCardOfDayOpened(card);
+  }, [card.slug]);
 
   const paragraphs = card.dailyDescription
     .split("\n\n")

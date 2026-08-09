@@ -5,6 +5,7 @@ import { getCardOfDay, cardImage } from "../data/daily";
 import { dailyExtras } from "../data/advice";
 import { syncUserProfile } from "../data/user";
 import DailyPopup from "../components/DailyPopup";
+import { trackDailyAdviceViewed, trackDailyRitualViewed } from "../lib/analytics";
 
 export default function HomeScreen({
   onNavigate,
@@ -81,14 +82,14 @@ export default function HomeScreen({
         title="Ежедневный совет"
         subtitle="Совет от карты дня"
         style={{ marginTop: 24 }}
-        onClick={() => setPopup("advice")}
+        onClick={() => { trackDailyAdviceViewed(card); setPopup("advice"); }}
       />
       <Widget
         icon={<Moon size={24} color="var(--accent)" />}
         title="Ритуал дня"
         subtitle="Действие на сегодня"
         style={{ marginTop: 16 }}
-        onClick={() => setPopup("ritual")}
+        onClick={() => { trackDailyRitualViewed(card); setPopup("ritual"); }}
       />
 
       {/* Попапы */}
