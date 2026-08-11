@@ -11,13 +11,14 @@ import {
   sendTarotMessage,
   type ChatMessage,
 } from "../lib/tarotChat";
-import { trackAiChatMessageSent } from "../lib/analytics";
+import { getBySlug } from "../data/cards";
+import {
+  trackAiChatMessageSent,
+  trackSpreadCompleted,
+} from "../lib/analytics";
 import SpreadDraw from "../components/SpreadDraw";
 
-const QUICK_PROMPTS = [
-  { label: "Разобрать расклад", value: "Разбери мой расклад: " },
-  { label: "Значение карты", value: "Что значит карта " },
-];
+const SPREAD_POSITIONS = ["Прошлое", "Настоящее", "Будущее"];
 
 export default function SpreadChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -26,7 +27,12 @@ export default function SpreadChatScreen() {
   const [loading, setLoading] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [typingText, setTypingText] = useState<string | null>(null);
-  const [spreadActive, setSpreadActive] = useState(false);
+  const [spreadPhase, setSpreadPhase] = useState<
+    "idle" | "choosing" | "drawing" | "done"
+  >("idle");
+  const [spreadQuestion, setSpreadQuestion] = useState("");
+  const [spreadCount, setSpreadCount] = useState<1 | 3>(3);
+  const [spreadSlugs, setSpreadSlugs] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,6 +67,21 @@ export default function SpreadChatScreen() {
 
   const handleSend = async () => {
     if (loading || typingText !== null || (!input.trim() && !pendingImage)) return;
+    if (spreadPhase === "choosing" || spreadPhase === "drawing") return;
+    const spreadText = input.trim();
+    if (
+      !pendingImage &&
+      spreadPhase === "idle" &&
+      messages.length === 0 &&
+      spreadText
+    ) {
+      trackAiChatMessageSent(false, spreadText.length);
+      setSpreadQuestion(spreadText);
+      setSpreadCount(3);
+      setSpreadPhase("choosing");
+      setInput("");
+      return;
+    }
 
     trackAiChatMessageSent(Boolean(pendingImage), input.trim().length);
 
@@ -115,6 +136,17 @@ export default function SpreadChatScreen() {
     }
   };
 
+  const handleChooseCount = (n: 1 | 3) => {
+    setSpreadCount(n);
+    setSpreadPhase("drawing");
+  };
+
+  const handleSpreadComplete = (slugs: string[]) => {
+    setSpreadSlugs(slugs);
+    setSpreadPhase("done");
+    trackSpreadCompleted(spreadCount, slugs);
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -153,7 +185,7 @@ export default function SpreadChatScreen() {
         .spread-chat-suggestions::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {messages.length > 0 && (
+      {(messages.length > 0 || spreadPhase !== "idle") && (
         <button
           type="button"
           aria-label="Новый чат"
@@ -166,6 +198,10 @@ export default function SpreadChatScreen() {
             setInput("");
             setPendingImage(null);
             setTypingText(null);
+            setSpreadPhase("idle");
+            setSpreadQuestion("");
+            setSpreadSlugs([]);
+            setSpreadCount(3);
           }}
           disabled={loading}
           style={{
@@ -206,23 +242,161 @@ export default function SpreadChatScreen() {
           paddingBottom: messages.length > 0 ? 16 : 0,
         }}
       >
-        {spreadActive && (
+        {spreadPhase !== "idle" && (
           <div
             style={{
-              paddingTop: "calc(env(safe-area-inset-top,0px) + 64px)",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              gap: 16,
+              gap: 22,
+              paddingTop: "calc(env(safe-area-inset-top,0px) + 64px)",
+              paddingBottom: 16,
             }}
           >
-            <SpreadDraw
-              count={3}
-              positions={["Прошлое", "Настоящее", "Будущее"]}
-            />
+            <div
+              style={{
+                alignSelf: "flex-end",
+                maxWidth: "80%",
+                padding: "11px 14px",
+                borderRadius: 18,
+                background: "var(--surface)",
+                border: "1px solid var(--surface-border)",
+                color: "var(--text-primary)",
+                fontSize: 16,
+                lineHeight: 1.5,
+                whiteSpace: "pre-wrap",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {spreadQuestion}
+            </div>
+
+            {spreadPhase === "choosing" && (
+              <div
+                style={{
+                  width: "100%",
+                  color: "var(--text-body)",
+                  fontSize: 16,
+                  lineHeight: 1.5,
+                }}
+              >
+                <p style={{ margin: 0 }}>Какой расклад сделать?</p>
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  {([1, 3] as (1 | 3)[]).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => handleChooseCount(n)}
+                      style={{
+                        padding: "8px 14px",
+                        border: "1px solid var(--surface-border)",
+                        borderRadius: 16,
+                        background: "var(--surface)",
+                        color: "var(--text-primary)",
+                        fontSize: 14,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {n === 1 ? "1 карта" : "3 карты"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(spreadPhase === "drawing" || spreadPhase === "done") && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                <SpreadDraw
+                  count={spreadCount}
+                  positions={
+                    spreadCount === 3 ? SPREAD_POSITIONS : undefined
+                  }
+                  onComplete={handleSpreadComplete}
+                />
+              </div>
+            )}
+
+            {spreadPhase === "done" && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                {spreadSlugs.map((slug, index) => {
+                  const card = getBySlug(slug);
+                  if (!card) return null;
+                  const interpretation =
+                    spreadCount === 1
+                      ? card.description
+                      : index === 0
+                        ? card.spreadPast
+                        : index === 1
+                          ? card.spreadPresent
+                          : card.spreadFuture;
+                  const paragraphs = interpretation
+                    .split("\n\n")
+                    .map((p) => p.trim())
+                    .filter(Boolean);
+                  return (
+                    <article
+                      key={slug}
+                      style={{
+                        padding: 18,
+                        borderRadius: "var(--radius-card)",
+                        border: "1px solid var(--surface-border)",
+                        background: "var(--surface)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--accent)",
+                        }}
+                      >
+                        {spreadCount === 1
+                          ? "Ваша карта"
+                          : SPREAD_POSITIONS[index]}
+                      </div>
+                      <h2
+                        style={{
+                          margin: "4px 0 0",
+                          fontSize: 19,
+                          fontWeight: 700,
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {card.name}
+                      </h2>
+                      {paragraphs.map((paragraph, i) => (
+                        <p
+                          key={i}
+                          style={{
+                            margin: i === 0 ? "8px 0 0" : "10px 0 0",
+                            fontSize: 15,
+                            lineHeight: 1.5,
+                            color: "var(--text-body)",
+                          }}
+                        >
+                          {paragraph}
+                        </p>
+                      ))}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
-        {messages.length === 0 && !spreadActive ? (
+        {messages.length === 0 && spreadPhase === "idle" ? (
           <div
             style={{
               flex: 1,
@@ -278,7 +452,7 @@ export default function SpreadChatScreen() {
                   color: "var(--text-secondary)",
                 }}
               >
-                Я помогу интерпретировать твой расклад таро
+                Задай вопрос — и вытяни карты
               </p>
             )}
           </div>
@@ -449,30 +623,24 @@ export default function SpreadChatScreen() {
               scrollbarWidth: "none",
             }}
           >
-            {QUICK_PROMPTS.map(({ label, value }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => {
-                  setInput(value);
-                  inputRef.current?.focus();
-                }}
-                style={{
-                  flexShrink: 0,
-                  width: "fit-content",
-                  padding: "6px 9px",
-                  border: "1px solid var(--surface-border)",
-                  borderRadius: 16,
-                  background: "var(--surface)",
-                  color: "var(--text-secondary)",
-                  fontSize: 11.5,
-                  lineHeight: 1.35,
-                  cursor: "pointer",
-                }}
-              >
-                {label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => inputRef.current?.focus()}
+              style={{
+                flexShrink: 0,
+                width: "fit-content",
+                padding: "6px 9px",
+                border: "1px solid var(--surface-border)",
+                borderRadius: 16,
+                background: "var(--surface)",
+                color: "var(--text-secondary)",
+                fontSize: 11.5,
+                lineHeight: 1.35,
+                cursor: "pointer",
+              }}
+            >
+              Задать вопрос картам
+            </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -490,24 +658,6 @@ export default function SpreadChatScreen() {
               }}
             >
               Добавить фото
-            </button>
-            <button
-              type="button"
-              onClick={() => setSpreadActive(true)}
-              style={{
-                flexShrink: 0,
-                width: "fit-content",
-                padding: "6px 9px",
-                border: "1px solid var(--surface-border)",
-                borderRadius: 16,
-                background: "var(--surface)",
-                color: "var(--text-secondary)",
-                fontSize: 11.5,
-                lineHeight: 1.35,
-                cursor: "pointer",
-              }}
-            >
-              Сделать расклад
             </button>
           </div>
         )}
@@ -561,7 +711,7 @@ export default function SpreadChatScreen() {
             onKeyDown={handleKeyDown}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder="Напиши сообщение"
+            placeholder="Задай вопрос картам…"
             rows={1}
             style={{
               flex: 1,
