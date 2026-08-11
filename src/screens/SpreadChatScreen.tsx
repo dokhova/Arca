@@ -12,6 +12,7 @@ import {
   type ChatMessage,
 } from "../lib/tarotChat";
 import { trackAiChatMessageSent } from "../lib/analytics";
+import SpreadDraw from "../components/SpreadDraw";
 
 const QUICK_PROMPTS = [
   { label: "Разобрать расклад", value: "Разбери мой расклад: " },
@@ -25,6 +26,7 @@ export default function SpreadChatScreen() {
   const [loading, setLoading] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [typingText, setTypingText] = useState<string | null>(null);
+  const [spreadActive, setSpreadActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -204,7 +206,23 @@ export default function SpreadChatScreen() {
           paddingBottom: messages.length > 0 ? 16 : 0,
         }}
       >
-        {messages.length === 0 ? (
+        {spreadActive && (
+          <div
+            style={{
+              paddingTop: "calc(env(safe-area-inset-top,0px) + 64px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <SpreadDraw
+              count={3}
+              positions={["Прошлое", "Настоящее", "Будущее"]}
+            />
+          </div>
+        )}
+        {messages.length === 0 && !spreadActive ? (
           <div
             style={{
               flex: 1,
@@ -472,6 +490,24 @@ export default function SpreadChatScreen() {
               }}
             >
               Добавить фото
+            </button>
+            <button
+              type="button"
+              onClick={() => setSpreadActive(true)}
+              style={{
+                flexShrink: 0,
+                width: "fit-content",
+                padding: "6px 9px",
+                border: "1px solid var(--surface-border)",
+                borderRadius: 16,
+                background: "var(--surface)",
+                color: "var(--text-secondary)",
+                fontSize: 11.5,
+                lineHeight: 1.35,
+                cursor: "pointer",
+              }}
+            >
+              Сделать расклад
             </button>
           </div>
         )}
