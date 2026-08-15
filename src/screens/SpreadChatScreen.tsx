@@ -32,12 +32,13 @@ export default function SpreadChatScreen() {
   >("idle");
   const [spreadQuestion, setSpreadQuestion] = useState("");
   const [spreadCount, setSpreadCount] = useState<1 | 3>(3);
-  const [spreadSlugs, setSpreadSlugs] = useState<string[]>([]);
+  const [, setSpreadSlugs] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
+  const spreadContextRef = useRef<ChatMessage | null>(null);
   const firstName = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name;
 
   useEffect(() => {
@@ -63,6 +64,27 @@ export default function SpreadChatScreen() {
     } catch {
       setPendingImage(null);
     }
+  };
+
+  const streamReply = (reply: string) => {
+    setTypingText("");
+    let visibleCharacters = 0;
+    typingIntervalRef.current = window.setInterval(() => {
+      const chunkSize = visibleCharacters % 2 === 0 ? 3 : 2;
+      visibleCharacters = Math.min(visibleCharacters + chunkSize, reply.length);
+      setTypingText(reply.slice(0, visibleCharacters));
+      if (visibleCharacters === reply.length) {
+        if (typingIntervalRef.current !== null) {
+          window.clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setMessages((current) => [
+          ...current,
+          { role: "assistant", content: reply },
+        ]);
+        setTypingText(null);
+      }
+    }, 30);
   };
 
   const handleSend = async () => {
@@ -98,30 +120,14 @@ export default function SpreadChatScreen() {
     setLoading(true);
 
     try {
-      const reply = await sendTarotMessage(nextMessages);
+      const apiMessages = spreadContextRef.current
+        ? [spreadContextRef.current, ...nextMessages]
+        : nextMessages;
+      const reply = await sendTarotMessage(apiMessages);
       if (!mountedRef.current) return;
 
       setLoading(false);
-      setTypingText("");
-      let visibleCharacters = 0;
-
-      typingIntervalRef.current = window.setInterval(() => {
-        const chunkSize = visibleCharacters % 2 === 0 ? 3 : 2;
-        visibleCharacters = Math.min(visibleCharacters + chunkSize, reply.length);
-        setTypingText(reply.slice(0, visibleCharacters));
-
-        if (visibleCharacters === reply.length) {
-          if (typingIntervalRef.current !== null) {
-            window.clearInterval(typingIntervalRef.current);
-            typingIntervalRef.current = null;
-          }
-          setMessages((current) => [
-            ...current,
-            { role: "assistant", content: reply },
-          ]);
-          setTypingText(null);
-        }
-      }, 30);
+      streamReply(reply);
     } catch {
       if (!mountedRef.current) return;
       setMessages((current) => [
@@ -141,10 +147,56 @@ export default function SpreadChatScreen() {
     setSpreadPhase("drawing");
   };
 
-  const handleSpreadComplete = (slugs: string[]) => {
+  const buildSpreadContext = (
+    question: string,
+    count: 1 | 3,
+    slugs: string[],
+  ): ChatMessage => {
+    const lines = slugs
+      .map((slug, index) => {
+        const card = getBySlug(slug);
+        const name = card?.name ?? slug;
+        const position = count === 3 ? SPREAD_POSITIONS[index] : "Карта";
+        return `${position}: ${name}`;
+      })
+      .join("\n");
+    const content =
+      `Вопрос пользователя: "${question}".\n` +
+      `Он вытянул ${count === 1 ? "одну карту" : "три карты"} в раскладе:\n` +
+      `${lines}\n\n` +
+      `Дай тёплое живое толкование именно под этот вопрос. ` +
+      (count === 3
+        ? "Свяжи карты по позициям прошлое → настоящее → будущее в единый рассказ. "
+        : "Раскрой карту в контексте вопроса. ") +
+      `Обращайся на «ты», не перечисляй значения формально. ` +
+      `В конце можешь предложить один уточняющий вопрос.`;
+    return { role: "user", content };
+  };
+
+  const handleSpreadComplete = async (slugs: string[]) => {
     setSpreadSlugs(slugs);
     setSpreadPhase("done");
     trackSpreadCompleted(spreadCount, slugs);
+
+    const context = buildSpreadContext(spreadQuestion, spreadCount, slugs);
+    spreadContextRef.current = context;
+    setLoading(true);
+    try {
+      const reply = await sendTarotMessage([context]);
+      if (!mountedRef.current) return;
+      setLoading(false);
+      streamReply(reply);
+    } catch {
+      if (!mountedRef.current) return;
+      setLoading(false);
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: "Не получилось получить толкование. Попробуй ещё раз",
+        },
+      ]);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -202,6 +254,7 @@ export default function SpreadChatScreen() {
             setSpreadQuestion("");
             setSpreadSlugs([]);
             setSpreadCount(3);
+            spreadContextRef.current = null;
           }}
           disabled={loading}
           style={{
@@ -279,7 +332,7 @@ export default function SpreadChatScreen() {
                   lineHeight: 1.5,
                 }}
               >
-                <p style={{ margin: 0 }}>Какой расклад сделать?</p>
+                <p style={{ margin: 0 }}>В каком формате сделать расклад?</p>
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                   {([1, 3] as (1 | 3)[]).map((n) => (
                     <button
@@ -296,7 +349,9 @@ export default function SpreadChatScreen() {
                         cursor: "pointer",
                       }}
                     >
-                      {n === 1 ? "1 карта" : "3 карты"}
+                      {n === 1
+                        ? "1 карта"
+                        : "3 карты · прошлое, настоящее, будущее"}
                     </button>
                   ))}
                 </div>
@@ -322,78 +377,6 @@ export default function SpreadChatScreen() {
               </div>
             )}
 
-            {spreadPhase === "done" && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
-                {spreadSlugs.map((slug, index) => {
-                  const card = getBySlug(slug);
-                  if (!card) return null;
-                  const interpretation =
-                    spreadCount === 1
-                      ? card.description
-                      : index === 0
-                        ? card.spreadPast
-                        : index === 1
-                          ? card.spreadPresent
-                          : card.spreadFuture;
-                  const paragraphs = interpretation
-                    .split("\n\n")
-                    .map((p) => p.trim())
-                    .filter(Boolean);
-                  return (
-                    <article
-                      key={slug}
-                      style={{
-                        padding: 18,
-                        borderRadius: "var(--radius-card)",
-                        border: "1px solid var(--surface-border)",
-                        background: "var(--surface)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "var(--accent)",
-                        }}
-                      >
-                        {spreadCount === 1
-                          ? "Ваша карта"
-                          : SPREAD_POSITIONS[index]}
-                      </div>
-                      <h2
-                        style={{
-                          margin: "4px 0 0",
-                          fontSize: 19,
-                          fontWeight: 700,
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {card.name}
-                      </h2>
-                      {paragraphs.map((paragraph, i) => (
-                        <p
-                          key={i}
-                          style={{
-                            margin: i === 0 ? "8px 0 0" : "10px 0 0",
-                            fontSize: 15,
-                            lineHeight: 1.5,
-                            color: "var(--text-body)",
-                          }}
-                        >
-                          {paragraph}
-                        </p>
-                      ))}
-                    </article>
-                  );
-                })}
-              </div>
-            )}
           </div>
         )}
         {messages.length === 0 && spreadPhase === "idle" ? (
