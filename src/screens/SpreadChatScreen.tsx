@@ -19,6 +19,12 @@ import {
 import SpreadDraw from "../components/SpreadDraw";
 
 const SPREAD_POSITIONS = ["Прошлое", "Настоящее", "Будущее"];
+const QUESTION_SUGGESTIONS = [
+  "Что меня ждёт в будущем",
+  "Когда встречу любовь",
+  "Стоит ли менять работу",
+  "Совет на сегодня",
+];
 
 export default function SpreadChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -39,7 +45,6 @@ export default function SpreadChatScreen() {
   const typingIntervalRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const spreadContextRef = useRef<ChatMessage | null>(null);
-  const firstName = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -424,20 +429,8 @@ export default function SpreadChatScreen() {
                 color: "var(--text-primary)",
               }}
             >
-              {firstName ? `Привет, ${firstName}!` : "Привет!"}
+              Что хочешь узнать?
             </h1>
-            {!hideEmptyStateExtras && (
-              <p
-                style={{
-                  margin: "8px 0 0",
-                  fontSize: 17,
-                  lineHeight: 1.45,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Задай вопрос — и вытяни карты
-              </p>
-            )}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -597,7 +590,7 @@ export default function SpreadChatScreen() {
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               flexWrap: "nowrap",
               gap: 8,
               width: "100%",
@@ -606,135 +599,160 @@ export default function SpreadChatScreen() {
               scrollbarWidth: "none",
             }}
           >
-            <button
-              type="button"
-              onClick={() => inputRef.current?.focus()}
-              style={{
-                flexShrink: 0,
-                width: "fit-content",
-                padding: "6px 9px",
-                border: "1px solid var(--surface-border)",
-                borderRadius: 16,
-                background: "var(--surface)",
-                color: "var(--text-secondary)",
-                fontSize: 11.5,
-                lineHeight: 1.35,
-                cursor: "pointer",
-              }}
-            >
-              Задать вопрос картам
-            </button>
+            {QUESTION_SUGGESTIONS.map((text, index) => (
+              <button
+                key={text}
+                type="button"
+                onClick={() => {
+                  setInput(text);
+                  inputRef.current?.focus();
+                }}
+                style={{
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  padding: "9px 15px",
+                  border:
+                    index === 0
+                      ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)"
+                      : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                  borderRadius: 18,
+                  background:
+                    index === 0
+                      ? "color-mix(in srgb, var(--accent) 8%, transparent)"
+                      : "color-mix(in srgb, var(--accent) 4%, transparent)",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                {text}
+              </button>
+            ))}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={{
                 flexShrink: 0,
-                width: "fit-content",
-                padding: "6px 9px",
-                border: "1px solid var(--surface-border)",
-                borderRadius: 16,
-                background: "var(--surface)",
+                whiteSpace: "nowrap",
+                padding: "9px 15px",
+                border:
+                  "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                borderRadius: 18,
+                background:
+                  "color-mix(in srgb, var(--accent) 4%, transparent)",
                 color: "var(--text-secondary)",
-                fontSize: 11.5,
-                lineHeight: 1.35,
+                fontSize: 13,
                 cursor: "pointer",
               }}
             >
-              Добавить фото
+              Сделай расклад по фото
             </button>
           </div>
         )}
 
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "7px 8px",
             borderRadius: 24,
-            background: "var(--nav-bg)",
-            border: "1px solid var(--surface-border)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            padding: 1.5,
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, transparent), color-mix(in srgb, var(--accent) 8%, transparent) 45%, color-mix(in srgb, var(--accent) 50%, transparent))",
+            boxShadow:
+              "0 0 26px color-mix(in srgb, var(--accent) 20%, transparent)",
           }}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            disabled={loading}
-            hidden
-          />
-          <button
-            type="button"
-            aria-label="Добавить фото"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
+          <div
             style={{
-              width: 42,
-              height: 42,
-              flexShrink: 0,
-              padding: 0,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              gap: 8,
+              padding: "7px 8px",
+              borderRadius: 22,
               border: "none",
-              background: "transparent",
-              color: "var(--nav-inactive)",
-              cursor: loading ? "default" : "pointer",
+              background: "var(--nav-bg)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
             }}
           >
-            <ImagePlus size={21} />
-          </button>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-            placeholder="Задай вопрос картам…"
-            rows={1}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              minHeight: 42,
-              maxHeight: 112,
-              boxSizing: "border-box",
-              resize: "none",
-              padding: "10px 4px",
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              color: "var(--text-primary)",
-              font: "inherit",
-              fontSize: 16,
-              lineHeight: 1.35,
-            }}
-          />
-          <button
-            type="button"
-            aria-label="Отправить"
-            onClick={() => void handleSend()}
-            disabled={!canSend}
-            style={{
-              width: 42,
-              height: 42,
-              flexShrink: 0,
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "50%",
-              border: "none",
-              background: canSend ? "var(--accent)" : "var(--surface)",
-              color: canSend ? "var(--card-dark-text)" : "var(--nav-inactive)",
-              cursor: canSend ? "pointer" : "default",
-            }}
-          >
-            <ArrowUp size={22} strokeWidth={2.4} />
-          </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={loading}
+              hidden
+            />
+            <button
+              type="button"
+              aria-label="Добавить фото"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              style={{
+                width: 42,
+                height: 42,
+                flexShrink: 0,
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                background: "transparent",
+                color: "var(--nav-inactive)",
+                cursor: loading ? "default" : "pointer",
+              }}
+            >
+              <ImagePlus size={21} />
+            </button>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder="Спроси карты…"
+              rows={1}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                minHeight: 42,
+                maxHeight: 112,
+                boxSizing: "border-box",
+                resize: "none",
+                padding: "10px 4px",
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                color: "var(--text-primary)",
+                font: "inherit",
+                fontSize: 16,
+                lineHeight: 1.35,
+              }}
+            />
+            <button
+              type="button"
+              aria-label="Отправить"
+              onClick={() => void handleSend()}
+              disabled={!canSend}
+              style={{
+                width: 42,
+                height: 42,
+                flexShrink: 0,
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                border: "none",
+                background: canSend ? "var(--accent)" : "var(--surface)",
+                color: canSend
+                  ? "var(--card-dark-text)"
+                  : "var(--nav-inactive)",
+                cursor: canSend ? "pointer" : "default",
+              }}
+            >
+              <ArrowUp size={22} strokeWidth={2.4} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
