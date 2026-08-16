@@ -12,13 +12,13 @@ import {
   type ChatMessage,
 } from "../lib/tarotChat";
 import { getBySlug } from "../data/cards";
+import { cardImage } from "../data/daily";
 import {
   trackAiChatMessageSent,
   trackSpreadCompleted,
 } from "../lib/analytics";
 import SpreadDraw from "../components/SpreadDraw";
 
-const SPREAD_POSITIONS = ["Прошлое", "Настоящее", "Будущее"];
 const QUESTION_SUGGESTIONS = [
   "Что меня ждёт в будущем",
   "Когда встречу любовь",
@@ -33,18 +33,15 @@ export default function SpreadChatScreen() {
   const [loading, setLoading] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [typingText, setTypingText] = useState<string | null>(null);
-  const [spreadPhase, setSpreadPhase] = useState<
-    "idle" | "choosing" | "drawing" | "done"
-  >("idle");
-  const [spreadQuestion, setSpreadQuestion] = useState("");
-  const [spreadCount, setSpreadCount] = useState<1 | 3>(3);
-  const [, setSpreadSlugs] = useState<string[]>([]);
+  const [pendingDraw, setPendingDraw] = useState<{
+    count: number;
+    positions: string[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
-  const spreadContextRef = useRef<ChatMessage | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +68,12 @@ export default function SpreadChatScreen() {
     }
   };
 
-  const streamReply = (reply: string) => {
+  const streamReply = (reply: string, onDone?: () => void) => {
+    if (reply.trim() === "") {
+      setTypingText(null);
+      onDone?.();
+      return;
+    }
     setTypingText("");
     let visibleCharacters = 0;
     typingIntervalRef.current = window.setInterval(() => {
@@ -88,53 +90,36 @@ export default function SpreadChatScreen() {
           { role: "assistant", content: reply },
         ]);
         setTypingText(null);
+        onDone?.();
       }
     }, 30);
   };
 
-  const handleSend = async () => {
-    if (loading || typingText !== null || (!input.trim() && !pendingImage)) return;
-    if (spreadPhase === "choosing" || spreadPhase === "drawing") return;
-    const spreadText = input.trim();
-    if (
-      !pendingImage &&
-      spreadPhase === "idle" &&
-      messages.length === 0 &&
-      spreadText
-    ) {
-      trackAiChatMessageSent(false, spreadText.length);
-      setSpreadQuestion(spreadText);
-      setSpreadCount(3);
-      setSpreadPhase("choosing");
-      setInput("");
-      return;
-    }
+  const parseSpreadMarker = (
+    raw: string,
+  ): { text: string; draw: { count: number; positions: string[] } | null } => {
+    const match = raw.match(/\[\[\s*SPREAD\s*:\s*(\d)\s*:\s*([^\]]*)\]\]/i);
+    if (!match) return { text: raw.trim(), draw: null };
+    const count = Math.min(3, Math.max(1, parseInt(match[1], 10) || 1));
+    const positions = match[2]
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .slice(0, count);
+    return { text: raw.replace(match[0], "").trim(), draw: { count, positions } };
+  };
 
-    trackAiChatMessageSent(Boolean(pendingImage), input.trim().length);
-
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: input.trim(),
-      image: pendingImage ?? undefined,
-    };
-    const nextMessages = [...messages, userMessage];
-
-    setMessages(nextMessages);
-    setInput("");
-    setPendingImage(null);
+  const requestAssistant = async (convo: ChatMessage[]) => {
     setLoading(true);
-
     try {
-      const apiMessages = spreadContextRef.current
-        ? [spreadContextRef.current, ...nextMessages]
-        : nextMessages;
-      const reply = await sendTarotMessage(apiMessages);
+      const raw = await sendTarotMessage(convo);
       if (!mountedRef.current) return;
-
       setLoading(false);
-      streamReply(reply);
+      const { text, draw } = parseSpreadMarker(raw);
+      streamReply(text, draw ? () => setPendingDraw(draw) : undefined);
     } catch {
       if (!mountedRef.current) return;
+      setLoading(false);
       setMessages((current) => [
         ...current,
         {
@@ -142,77 +127,63 @@ export default function SpreadChatScreen() {
           content: "Не получилось получить ответ. Попробуй ещё раз",
         },
       ]);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleChooseCount = (n: 1 | 3) => {
-    setSpreadCount(n);
-    setSpreadPhase("drawing");
+  const sendText = async (text: string, image?: string) => {
+    const trimmed = text.trim();
+    if (loading || typingText !== null || pendingDraw || (!trimmed && !image))
+      return;
+    trackAiChatMessageSent(Boolean(image), trimmed.length);
+    const userMessage: ChatMessage = { role: "user", content: trimmed, image };
+    const next = [...messages, userMessage];
+    setMessages(next);
+    setInput("");
+    setPendingImage(null);
+    await requestAssistant(next);
   };
 
-  const buildSpreadContext = (
-    question: string,
-    count: 1 | 3,
-    slugs: string[],
-  ): ChatMessage => {
+  const handleSend = () => {
+    void sendText(input, pendingImage ?? undefined);
+  };
+
+  const handleDrawComplete = async (slugs: string[]) => {
+    const draw = pendingDraw;
+    setPendingDraw(null);
+    if (!draw) return;
+    trackSpreadCompleted(draw.count as 1 | 3, slugs);
     const lines = slugs
       .map((slug, index) => {
         const card = getBySlug(slug);
         const name = card?.name ?? slug;
-        const position = count === 3 ? SPREAD_POSITIONS[index] : "Карта";
-        return `${position}: ${name}`;
+        const position = draw.positions[index];
+        return position ? `${position}: ${name}` : name;
       })
       .join("\n");
-    const content =
-      `Вопрос пользователя: "${question}".\n` +
-      `Он вытянул ${count === 1 ? "одну карту" : "три карты"} в раскладе:\n` +
-      `${lines}\n\n` +
-      `Дай тёплое живое толкование именно под этот вопрос. ` +
-      (count === 3
-        ? "Свяжи карты по позициям прошлое → настоящее → будущее в единый рассказ. "
-        : "Раскрой карту в контексте вопроса. ") +
-      `Обращайся на «ты», не перечисляй значения формально. ` +
-      `В конце можешь предложить один уточняющий вопрос.`;
-    return { role: "user", content };
-  };
-
-  const handleSpreadComplete = async (slugs: string[]) => {
-    setSpreadSlugs(slugs);
-    setSpreadPhase("done");
-    trackSpreadCompleted(spreadCount, slugs);
-
-    const context = buildSpreadContext(spreadQuestion, spreadCount, slugs);
-    spreadContextRef.current = context;
-    setLoading(true);
-    try {
-      const reply = await sendTarotMessage([context]);
-      if (!mountedRef.current) return;
-      setLoading(false);
-      streamReply(reply);
-    } catch {
-      if (!mountedRef.current) return;
-      setLoading(false);
-      setMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content: "Не получилось получить толкование. Попробуй ещё раз",
-        },
-      ]);
-    }
+    const content = `Я вытянул карты:\n${lines}\n\nРастолкуй их под мой вопрос.`;
+    const spreadMessage: ChatMessage = {
+      role: "user",
+      content,
+      spread: { positions: draw.positions, slugs },
+    };
+    const next = [...messages, spreadMessage];
+    setMessages(next);
+    await requestAssistant(next);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      void handleSend();
+      handleSend();
     }
   };
 
   const isTyping = typingText !== null;
-  const canSend = !loading && !isTyping && Boolean(input.trim() || pendingImage);
+  const canSend =
+    !loading &&
+    !isTyping &&
+    !pendingDraw &&
+    Boolean(input.trim() || pendingImage);
   const hideEmptyStateExtras = inputFocused || input.length > 0;
   const renderedMessages: ChatMessage[] = isTyping
     ? [...messages, { role: "assistant", content: typingText ?? "" }]
@@ -242,7 +213,7 @@ export default function SpreadChatScreen() {
         .spread-chat-suggestions::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {(messages.length > 0 || spreadPhase !== "idle") && (
+      {(messages.length > 0 || pendingDraw) && (
         <button
           type="button"
           aria-label="Новый чат"
@@ -255,11 +226,7 @@ export default function SpreadChatScreen() {
             setInput("");
             setPendingImage(null);
             setTypingText(null);
-            setSpreadPhase("idle");
-            setSpreadQuestion("");
-            setSpreadSlugs([]);
-            setSpreadCount(3);
-            spreadContextRef.current = null;
+            setPendingDraw(null);
           }}
           disabled={loading}
           style={{
@@ -300,91 +267,7 @@ export default function SpreadChatScreen() {
           paddingBottom: messages.length > 0 ? 16 : 0,
         }}
       >
-        {spreadPhase !== "idle" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 22,
-              paddingTop: "calc(env(safe-area-inset-top,0px) + 64px)",
-              paddingBottom: 16,
-            }}
-          >
-            <div
-              style={{
-                alignSelf: "flex-end",
-                maxWidth: "80%",
-                padding: "11px 14px",
-                borderRadius: 18,
-                background: "var(--surface)",
-                border: "1px solid var(--surface-border)",
-                color: "var(--text-primary)",
-                fontSize: 16,
-                lineHeight: 1.5,
-                whiteSpace: "pre-wrap",
-                overflowWrap: "anywhere",
-              }}
-            >
-              {spreadQuestion}
-            </div>
-
-            {spreadPhase === "choosing" && (
-              <div
-                style={{
-                  width: "100%",
-                  color: "var(--text-body)",
-                  fontSize: 16,
-                  lineHeight: 1.5,
-                }}
-              >
-                <p style={{ margin: 0 }}>В каком формате сделать расклад?</p>
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                  {([1, 3] as (1 | 3)[]).map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => handleChooseCount(n)}
-                      style={{
-                        padding: "8px 14px",
-                        border: "1px solid var(--surface-border)",
-                        borderRadius: 16,
-                        background: "var(--surface)",
-                        color: "var(--text-primary)",
-                        fontSize: 14,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {n === 1
-                        ? "1 карта"
-                        : "3 карты · прошлое, настоящее, будущее"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(spreadPhase === "drawing" || spreadPhase === "done") && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 16,
-                }}
-              >
-                <SpreadDraw
-                  count={spreadCount}
-                  positions={
-                    spreadCount === 3 ? SPREAD_POSITIONS : undefined
-                  }
-                  onComplete={handleSpreadComplete}
-                />
-              </div>
-            )}
-
-          </div>
-        )}
-        {messages.length === 0 && spreadPhase === "idle" ? (
+        {messages.length === 0 && !pendingDraw ? (
           <div
             style={{
               flex: 1,
@@ -436,6 +319,66 @@ export default function SpreadChatScreen() {
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             {renderedMessages.map((message, index) => {
               const isUser = message.role === "user";
+
+              if (isUser && message.spread) {
+                const { positions, slugs } = message.spread;
+                const single = slugs.length === 1;
+                return (
+                  <div
+                    key={`spread-${index}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      gap: 10,
+                    }}
+                  >
+                    {slugs.map((slug, i) => {
+                      const card = getBySlug(slug);
+                      if (!card) return null;
+                      return (
+                        <div
+                          key={slug}
+                          style={{
+                            width: single ? 118 : 92,
+                            textAlign: "center",
+                          }}
+                        >
+                          {positions[i] && (
+                            <div
+                              style={{
+                                marginBottom: 6,
+                                fontSize: 12,
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {positions[i]}
+                            </div>
+                          )}
+                          <img
+                            src={cardImage(card)}
+                            alt={card.name}
+                            style={{
+                              width: "100%",
+                              borderRadius: 10,
+                              display: "block",
+                            }}
+                          />
+                          <div
+                            style={{
+                              marginTop: 6,
+                              fontSize: 12,
+                              color: "var(--text-primary)",
+                            }}
+                          >
+                            {card.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
 
               if (!isUser) {
                 return (
@@ -500,6 +443,27 @@ export default function SpreadChatScreen() {
                 </div>
               );
             })}
+
+            {pendingDraw && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                <SpreadDraw
+                  count={pendingDraw.count}
+                  positions={
+                    pendingDraw.positions.length
+                      ? pendingDraw.positions
+                      : undefined
+                  }
+                  onComplete={handleDrawComplete}
+                />
+              </div>
+            )}
 
             {loading && (
               <div
@@ -603,10 +567,7 @@ export default function SpreadChatScreen() {
               <button
                 key={text}
                 type="button"
-                onClick={() => {
-                  setInput(text);
-                  inputRef.current?.focus();
-                }}
+                onClick={() => void sendText(text)}
                 style={{
                   flexShrink: 0,
                   whiteSpace: "nowrap",

@@ -6,6 +6,7 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   image?: string; // dataURL для превью и отправки
+  spread?: { positions: string[]; slugs: string[] };
 };
 
 export async function sendTarotMessage(
