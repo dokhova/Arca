@@ -600,18 +600,18 @@ export default function SpreadChatScreen() {
                 style={{
                   flexShrink: 0,
                   whiteSpace: "nowrap",
-                  padding: "9px 15px",
+                  padding: "12px 18px",
                   border:
                     index === 0
                       ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)"
                       : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
-                  borderRadius: 18,
+                  borderRadius: 20,
                   background:
                     index === 0
                       ? "color-mix(in srgb, var(--accent) 8%, transparent)"
                       : "color-mix(in srgb, var(--accent) 4%, transparent)",
                   color: "var(--text-secondary)",
-                  fontSize: 13,
+                  fontSize: 14,
                   cursor: "pointer",
                 }}
               >
@@ -624,14 +624,14 @@ export default function SpreadChatScreen() {
               style={{
                 flexShrink: 0,
                 whiteSpace: "nowrap",
-                padding: "9px 15px",
+                padding: "12px 18px",
                 border:
                   "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
-                borderRadius: 18,
+                borderRadius: 20,
                 background:
                   "color-mix(in srgb, var(--accent) 4%, transparent)",
                 color: "var(--text-secondary)",
-                fontSize: 13,
+                fontSize: 14,
                 cursor: "pointer",
               }}
             >
