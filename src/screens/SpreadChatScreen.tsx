@@ -226,6 +226,23 @@ export default function SpreadChatScreen() {
       `}</style>
 
       {(messages.length > 0 || pendingDraw) && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "calc(env(safe-area-inset-top, 0px) + 72px)",
+            zIndex: 7,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(to bottom, var(--bg-base), transparent)",
+          }}
+        />
+      )}
+
+      {(messages.length > 0 || pendingDraw) && (
         <button
           type="button"
           aria-label="Новый чат"
