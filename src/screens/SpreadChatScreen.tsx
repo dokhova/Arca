@@ -99,14 +99,26 @@ export default function SpreadChatScreen() {
     raw: string,
   ): { text: string; draw: { count: number; positions: string[] } | null } => {
     const match = raw.match(/\[\[\s*SPREAD\s*:\s*(\d)\s*:\s*([^\]]*)\]\]/i);
-    if (!match) return { text: raw.trim(), draw: null };
+    if (!match) {
+      const clean = raw
+        .trim()
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "");
+      return { text: clean, draw: null };
+    }
     const count = Math.min(3, Math.max(1, parseInt(match[1], 10) || 1));
     const positions = match[2]
       .split(",")
       .map((part) => part.trim())
       .filter(Boolean)
       .slice(0, count);
-    return { text: raw.replace(match[0], "").trim(), draw: { count, positions } };
+    const text = raw.replace(match[0], "").trim();
+    const clean = text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "");
+    return { text: clean, draw: { count, positions } };
   };
 
   const requestAssistant = async (convo: ChatMessage[]) => {
