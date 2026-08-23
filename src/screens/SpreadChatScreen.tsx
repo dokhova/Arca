@@ -5,7 +5,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
-import { ArrowUp, ImagePlus, SquarePen, X } from "lucide-react";
+import { ArrowUp, ChevronRight, ImagePlus, SquarePen, X } from "lucide-react";
 import {
   compressImage,
   sendTarotMessage,
@@ -577,67 +577,82 @@ export default function SpreadChatScreen() {
         )}
 
         {messages.length === 0 && !hideEmptyStateExtras && (
-          <div
-            className="spread-chat-suggestions"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              flexWrap: "nowrap",
-              gap: 8,
-              width: "100%",
-              marginBottom: 12,
-              overflowX: "auto",
-              scrollbarWidth: "none",
-            }}
-          >
-            {QUESTION_SUGGESTIONS.map((text, index) => (
-              <button
-                key={text}
-                type="button"
-                onClick={() => void sendText(text)}
-                style={{
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                  padding: "12px 18px",
-                  border:
-                    index === 0
-                      ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)"
-                      : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
-                  borderRadius: 20,
-                  background:
-                    index === 0
-                      ? "color-mix(in srgb, var(--accent) 8%, transparent)"
-                      : "color-mix(in srgb, var(--accent) 4%, transparent)",
-                  color: "var(--text-secondary)",
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                {text}
-              </button>
-            ))}
+          <>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={{
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                padding: "12px 18px",
-                border:
-                  "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
-                borderRadius: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                padding: "10px 14px",
+                marginBottom: 12,
+                borderRadius: 14,
                 background:
-                  "color-mix(in srgb, var(--accent) 4%, transparent)",
+                  "color-mix(in srgb, var(--accent) 5%, transparent)",
+                border:
+                  "1px solid color-mix(in srgb, var(--accent) 14%, transparent)",
                 color: "var(--text-secondary)",
-                fontSize: 14,
                 cursor: "pointer",
+                textAlign: "left",
               }}
             >
-              Сделай расклад по фото
+              <ImagePlus
+                size={18}
+                style={{ flexShrink: 0, color: "var(--accent)" }}
+              />
+              <span style={{ flex: 1, fontSize: 13, lineHeight: 1.3 }}>
+                Загрузите фото своего расклада
+              </span>
+              <ChevronRight
+                size={16}
+                style={{ flexShrink: 0, opacity: 0.5 }}
+              />
             </button>
-          </div>
+            <div
+              className="spread-chat-suggestions"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                flexWrap: "nowrap",
+                gap: 8,
+                width: "100%",
+                marginBottom: 12,
+                overflowX: "auto",
+                scrollbarWidth: "none",
+              }}
+            >
+              {QUESTION_SUGGESTIONS.map((text, index) => (
+                <button
+                  key={text}
+                  type="button"
+                  onClick={() => void sendText(text)}
+                  style={{
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                    padding: "12px 18px",
+                    border:
+                      index === 0
+                        ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)"
+                        : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                    borderRadius: 20,
+                    background:
+                      index === 0
+                        ? "color-mix(in srgb, var(--accent) 8%, transparent)"
+                        : "color-mix(in srgb, var(--accent) 4%, transparent)",
+                    color: "var(--text-secondary)",
+                    fontSize: 14,
+                    cursor: "pointer",
+                  }}
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         <div
