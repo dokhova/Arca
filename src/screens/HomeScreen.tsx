@@ -92,6 +92,23 @@ export default function HomeScreen({
         onClick={() => { trackDailyRitualViewed(card); setPopup("ritual"); }}
       />
 
+      <button
+        type="button"
+        onClick={() => onNavigate("legal")}
+        style={{
+          width: "100%",
+          marginTop: 28,
+          border: "none",
+          background: "none",
+          color: "var(--nav-inactive)",
+          fontSize: 13,
+          textAlign: "center",
+          cursor: "pointer",
+        }}
+      >
+        Правовая информация
+      </button>
+
       {/* Попапы */}
       <DailyPopup
         open={popup === "advice"}

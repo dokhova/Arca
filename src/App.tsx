@@ -8,6 +8,10 @@ import CatalogScreen from "./screens/CatalogScreen";
 import CardDetailScreen from "./screens/CardDetailScreen";
 import SpreadScreen from "./screens/SpreadScreen";
 import SpreadChatScreen from "./screens/SpreadChatScreen";
+import LegalScreen from "./screens/LegalScreen";
+import LegalDocScreen from "./screens/LegalDocScreen";
+import OnboardingScreen from "./screens/OnboardingScreen";
+import { LEGAL_VERSION } from "./data/legal";
 
 /**
  * АРХИТЕКТУРА СЛОЁВ — НЕ МЕНЯТЬ:
@@ -26,7 +30,9 @@ export type Screen =
   | "cardDetail"
   | "spread"
   | "spreadChat"
-  | "catalog";
+  | "catalog"
+  | "legal"
+  | "legalDoc";
 
 const TAB_SCREENS: Record<Tab, Screen> = {
   home: "home",
@@ -37,6 +43,17 @@ const TAB_SCREENS: Record<Tab, Screen> = {
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
+  const [legalDocId, setLegalDocId] = useState<string | null>(null);
+  const [consented, setConsented] = useState<boolean>(() => {
+    try {
+      const rawConsent = localStorage.getItem("arca-consent");
+      if (!rawConsent) return false;
+      const value = JSON.parse(rawConsent);
+      return value.accepted === true && value.version === LEGAL_VERSION;
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     trackScreen(screen);
@@ -52,6 +69,28 @@ export default function App() {
       : screen === "spreadChat"
         ? "spreads"
         : "home";
+
+  if (!consented) {
+    return (
+      <OnboardingScreen
+        onAccept={() => {
+          try {
+            localStorage.setItem(
+              "arca-consent",
+              JSON.stringify({
+                accepted: true,
+                acceptedAt: new Date().toISOString(),
+                version: LEGAL_VERSION,
+              }),
+            );
+          } catch {
+            // Согласие действует в текущей сессии, даже если хранилище недоступно.
+          }
+          setConsented(true);
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -78,6 +117,21 @@ export default function App() {
           <CardDetailScreen
             slug={detailSlug!}
             onBack={() => setScreen("catalog")}
+          />
+        )}
+        {screen === "legal" && (
+          <LegalScreen
+            onBack={() => setScreen("home")}
+            onOpenDoc={(id) => {
+              setLegalDocId(id);
+              setScreen("legalDoc");
+            }}
+          />
+        )}
+        {screen === "legalDoc" && (
+          <LegalDocScreen
+            docId={legalDocId!}
+            onBack={() => setScreen("legal")}
           />
         )}
         {isRootScreen && (
