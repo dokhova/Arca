@@ -4,6 +4,7 @@ import type { TarotCard } from "../data/cards";
 let enabled = false;
 
 export function initAnalytics(): void {
+  if (enabled) return;
   const key = import.meta.env.VITE_POSTHOG_KEY;
   if (!key) return;
 

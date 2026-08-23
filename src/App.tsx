@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AppBackground from "./components/AppBackground";
 import BottomNav, { type Tab } from "./components/BottomNav";
-import { trackScreen } from "./lib/analytics";
+import { initAnalytics, trackScreen } from "./lib/analytics";
 import HomeScreen from "./screens/HomeScreen";
 import CardOfDayScreen from "./screens/CardOfDayScreen";
 import CatalogScreen from "./screens/CatalogScreen";
@@ -54,6 +54,10 @@ export default function App() {
       return false;
     }
   });
+
+  useEffect(() => {
+    if (consented) initAnalytics();
+  }, [consented]);
 
   useEffect(() => {
     trackScreen(screen);
