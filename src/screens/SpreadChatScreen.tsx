@@ -5,7 +5,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
-import { ArrowUp, ChevronRight, ImagePlus, SquarePen, X } from "lucide-react";
+import { ArrowUp, ImagePlus, SquarePen, X } from "lucide-react";
 import {
   compressImage,
   sendTarotMessage,
@@ -577,54 +577,21 @@ export default function SpreadChatScreen() {
         )}
 
         {messages.length === 0 && !hideEmptyStateExtras && (
-          <>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                width: "100%",
-                padding: "10px 14px",
-                marginBottom: 12,
-                borderRadius: 14,
-                background:
-                  "color-mix(in srgb, var(--accent) 5%, transparent)",
-                border:
-                  "1px solid color-mix(in srgb, var(--accent) 14%, transparent)",
-                color: "var(--text-secondary)",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <ImagePlus
-                size={18}
-                style={{ flexShrink: 0, color: "var(--accent)" }}
-              />
-              <span style={{ flex: 1, fontSize: 13, lineHeight: 1.3 }}>
-                Загрузите фото своего расклада
-              </span>
-              <ChevronRight
-                size={16}
-                style={{ flexShrink: 0, opacity: 0.5 }}
-              />
-            </button>
-            <div
-              className="spread-chat-suggestions"
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                flexWrap: "nowrap",
-                gap: 8,
-                width: "100%",
-                marginBottom: 12,
-                overflowX: "auto",
-                scrollbarWidth: "none",
-              }}
-            >
+          <div
+            className="spread-chat-suggestions"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              flexWrap: "nowrap",
+              gap: 8,
+              width: "100%",
+              marginBottom: 12,
+              overflowX: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
               {QUESTION_SUGGESTIONS.map((text) => (
                 <button
                   key={text}
@@ -670,8 +637,7 @@ export default function SpreadChatScreen() {
                 <ImagePlus size={16} />
                 Загрузить расклад
               </button>
-            </div>
-          </>
+          </div>
         )}
 
         <div
@@ -748,7 +714,7 @@ export default function SpreadChatScreen() {
                 background: "transparent",
                 color: "var(--text-primary)",
                 font: "inherit",
-                fontSize: 16,
+                fontSize: 14,
                 lineHeight: 1.35,
               }}
             />
