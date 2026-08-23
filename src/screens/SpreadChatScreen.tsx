@@ -625,7 +625,7 @@ export default function SpreadChatScreen() {
                 scrollbarWidth: "none",
               }}
             >
-              {QUESTION_SUGGESTIONS.map((text, index) => (
+              {QUESTION_SUGGESTIONS.map((text) => (
                 <button
                   key={text}
                   type="button"
@@ -635,14 +635,10 @@ export default function SpreadChatScreen() {
                     whiteSpace: "nowrap",
                     padding: "12px 18px",
                     border:
-                      index === 0
-                        ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)"
-                        : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                      "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
                     borderRadius: 20,
                     background:
-                      index === 0
-                        ? "color-mix(in srgb, var(--accent) 8%, transparent)"
-                        : "color-mix(in srgb, var(--accent) 4%, transparent)",
+                      "color-mix(in srgb, var(--accent) 4%, transparent)",
                     color: "var(--text-secondary)",
                     fontSize: 14,
                     cursor: "pointer",
@@ -651,6 +647,29 @@ export default function SpreadChatScreen() {
                   {text}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  whiteSpace: "nowrap",
+                  padding: "12px 16px",
+                  border:
+                    "1px dashed color-mix(in srgb, var(--accent) 55%, transparent)",
+                  borderRadius: 20,
+                  background:
+                    "color-mix(in srgb, var(--accent) 14%, transparent)",
+                  color: "var(--accent)",
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                <ImagePlus size={16} />
+                Загрузить расклад
+              </button>
             </div>
           </>
         )}
@@ -714,7 +733,7 @@ export default function SpreadChatScreen() {
               onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              placeholder="Спроси карты…"
+              placeholder="Спросите или загрузите расклад…"
               rows={1}
               style={{
                 flex: 1,
