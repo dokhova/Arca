@@ -6,7 +6,7 @@ import HomeScreen from "./screens/HomeScreen";
 import CardOfDayScreen from "./screens/CardOfDayScreen";
 import CatalogScreen from "./screens/CatalogScreen";
 import CardDetailScreen from "./screens/CardDetailScreen";
-import SpreadScreen from "./screens/SpreadScreen";
+import MoonTodayScreen from "./screens/MoonTodayScreen";
 import SpreadChatScreen from "./screens/SpreadChatScreen";
 import LegalScreen from "./screens/LegalScreen";
 import LegalDocScreen from "./screens/LegalDocScreen";
@@ -28,7 +28,7 @@ export type Screen =
   | "home"
   | "cardOfDay"
   | "cardDetail"
-  | "spread"
+  | "moon"
   | "spreadChat"
   | "catalog"
   | "legal"
@@ -105,8 +105,8 @@ export default function App() {
         {screen === "cardOfDay" && (
           <CardOfDayScreen onBack={() => setScreen("home")} />
         )}
-        {screen === "spread" && (
-          <SpreadScreen onBack={() => setScreen("home")} />
+        {screen === "moon" && (
+          <MoonTodayScreen onBack={() => setScreen("home")} />
         )}
         {screen === "spreadChat" && <SpreadChatScreen />}
         {screen === "catalog" && (

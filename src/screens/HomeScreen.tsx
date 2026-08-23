@@ -70,9 +70,9 @@ export default function HomeScreen({
           onClick={() => onNavigate("cardOfDay")}
         />
         <BigCard
-          title={"Расклад\nкарт"}
+          title={"Луна\nсегодня"}
           gradient="linear-gradient(135deg, var(--card-bronze-from), var(--card-bronze-to))"
-          onClick={() => onNavigate("spread")}
+          onClick={() => onNavigate("moon")}
         />
       </div>
 
