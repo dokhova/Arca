@@ -171,7 +171,7 @@ export default function OnboardingScreen({
               textAlign: "left",
             }}
           >
-            Принимаю{" "}
+            Мне есть 18 лет. Принимаю{" "}
             <LegalLink onClick={(event) => openDocument(event, "terms")}>
               Пользовательское соглашение
             </LegalLink>{" "}
@@ -179,7 +179,8 @@ export default function OnboardingScreen({
             <LegalLink onClick={(event) => openDocument(event, "privacy")}>
               Политику конфиденциальности
             </LegalLink>{" "}
-            и даю согласие на обработку персональных данных.
+            и даю согласие на обработку персональных данных, в том числе их
+            передачу за рубеж (в т. ч. в США).
           </div>
         </div>
 
