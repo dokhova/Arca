@@ -63,9 +63,10 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
           width: 44,
           height: 44,
           borderRadius: "50%",
-          border: "none",
+          border: "1px solid rgba(255,255,255,0.35)",
           cursor: "pointer",
-          background: "rgba(0,0,0,0.45)",
+          background: "rgba(0,0,0,0.62)",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.55)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
           display: "flex",
@@ -74,7 +75,7 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
           color: "#fff",
         }}
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={24} strokeWidth={2.5} />
       </button>
 
       <div style={{ position: "relative", zIndex: 1 }}>
