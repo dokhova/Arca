@@ -12,6 +12,9 @@ createRoot(document.getElementById("root")!).render(
 const tg = window.Telegram?.WebApp;
 tg?.ready?.();
 tg?.expand?.();
+if (tg && (tg.platform === "ios" || tg.platform === "android")) {
+  tg.requestFullscreen?.();
+}
 tg?.setHeaderColor?.("#17100A");
 tg?.setBackgroundColor?.("#17100A");
 tg?.setBottomBarColor?.("#17100A");

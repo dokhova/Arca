@@ -7,8 +7,10 @@ interface TelegramWebAppUser {
 
 interface TelegramWebApp {
   initDataUnsafe?: { user?: TelegramWebAppUser; start_param?: string };
+  platform?: string;
   ready?: () => void;
   expand?: () => void;
+  requestFullscreen?: () => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
   setBottomBarColor?: (color: string) => void;
