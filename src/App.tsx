@@ -72,11 +72,18 @@ export default function App() {
     if (!consented) return;
     try {
       if (localStorage.getItem("arca-write-access-asked")) return;
-      localStorage.setItem("arca-write-access-asked", "1");
     } catch {
       return;
     }
-    window.Telegram?.WebApp?.requestWriteAccess?.();
+    window.Telegram?.WebApp?.requestWriteAccess?.((granted) => {
+      if (granted) {
+        try {
+          localStorage.setItem("arca-write-access-asked", "1");
+        } catch {
+          // no-op
+        }
+      }
+    });
   }, [consented]);
 
   useEffect(() => {
@@ -111,12 +118,15 @@ export default function App() {
             // Согласие действует в текущей сессии, даже если хранилище недоступно.
           }
           setConsented(true);
-          try {
-            localStorage.setItem("arca-write-access-asked", "1");
-          } catch {
-            // no-op
-          }
-          window.Telegram?.WebApp?.requestWriteAccess?.();
+          window.Telegram?.WebApp?.requestWriteAccess?.((granted) => {
+            if (granted) {
+              try {
+                localStorage.setItem("arca-write-access-asked", "1");
+              } catch {
+                // no-op
+              }
+            }
+          });
         }}
       />
     );
