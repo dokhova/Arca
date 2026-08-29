@@ -699,7 +699,7 @@ export default function SpreadChatScreen() {
               onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              placeholder="Спросите или загрузите расклад…"
+              placeholder="Спросите или загрузите…"
               rows={1}
               style={{
                 flex: 1,
