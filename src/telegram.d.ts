@@ -6,7 +6,7 @@ interface TelegramWebAppUser {
 }
 
 interface TelegramWebApp {
-  initDataUnsafe?: { user?: TelegramWebAppUser };
+  initDataUnsafe?: { user?: TelegramWebAppUser; start_param?: string };
   ready?: () => void;
   expand?: () => void;
   setHeaderColor?: (color: string) => void;

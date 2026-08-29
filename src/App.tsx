@@ -41,7 +41,16 @@ const TAB_SCREENS: Record<Tab, Screen> = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>(() => {
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    const startScreens: Record<string, Screen> = {
+      card: "cardOfDay",
+      moon: "moon",
+      ai: "spreadChat",
+      catalog: "catalog",
+    };
+    return (startParam && startScreens[startParam]) || "home";
+  });
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
   const [legalDocId, setLegalDocId] = useState<string | null>(null);
   const [consented, setConsented] = useState<boolean>(() => {
