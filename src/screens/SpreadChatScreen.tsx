@@ -233,7 +233,7 @@ export default function SpreadChatScreen() {
             top: 0,
             left: 0,
             right: 0,
-            height: "calc(env(safe-area-inset-top, 0px) + 72px)",
+            height: "calc(env(safe-area-inset-top, 0px) + 72px + var(--tg-content-top, 0px))",
             zIndex: 7,
             pointerEvents: "none",
             background:
@@ -260,7 +260,7 @@ export default function SpreadChatScreen() {
           disabled={loading}
           style={{
             position: "fixed",
-            top: "calc(12px + env(safe-area-inset-top, 0px))",
+            top: "calc(12px + env(safe-area-inset-top, 0px) + var(--tg-content-top, 0px))",
             right: 16,
             zIndex: 8,
             width: 40,
@@ -291,7 +291,7 @@ export default function SpreadChatScreen() {
           scrollbarWidth: "none",
           paddingTop:
             messages.length > 0
-              ? "calc(env(safe-area-inset-top, 0px) + 64px)"
+              ? "calc(env(safe-area-inset-top, 0px) + 64px + var(--tg-content-top, 0px))"
               : 0,
           paddingBottom: messages.length > 0 ? 16 : 0,
         }}

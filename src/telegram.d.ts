@@ -8,9 +8,13 @@ interface TelegramWebAppUser {
 interface TelegramWebApp {
   initDataUnsafe?: { user?: TelegramWebAppUser; start_param?: string };
   platform?: string;
+  isFullscreen?: boolean;
+  safeAreaInset?: { top?: number; bottom?: number; left?: number; right?: number };
+  contentSafeAreaInset?: { top?: number; bottom?: number; left?: number; right?: number };
   ready?: () => void;
   expand?: () => void;
   requestFullscreen?: () => void;
+  onEvent?: (eventType: string, callback: () => void) => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
   setBottomBarColor?: (color: string) => void;

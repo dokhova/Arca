@@ -18,3 +18,12 @@ if (tg && (tg.platform === "ios" || tg.platform === "android")) {
 tg?.setHeaderColor?.("#17100A");
 tg?.setBackgroundColor?.("#17100A");
 tg?.setBottomBarColor?.("#17100A");
+
+function syncTelegramInsets() {
+  const top = tg?.contentSafeAreaInset?.top ?? 0;
+  document.documentElement.style.setProperty("--tg-content-top", top + "px");
+}
+syncTelegramInsets();
+tg?.onEvent?.("contentSafeAreaChanged", syncTelegramInsets);
+tg?.onEvent?.("safeAreaChanged", syncTelegramInsets);
+tg?.onEvent?.("fullscreenChanged", syncTelegramInsets);

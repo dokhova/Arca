@@ -58,7 +58,7 @@ export default function CardOfDayScreen({ onBack }: { onBack: () => void }) {
         style={{
           position: "fixed",
           zIndex: 2,
-          top: "calc(20px + env(safe-area-inset-top, 40px))",
+          top: "calc(20px + env(safe-area-inset-top, 40px) + var(--tg-content-top, 0px))",
           left: 20,
           width: 44,
           height: 44,
