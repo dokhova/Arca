@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageCircle, ArrowUpRight } from "lucide-react";
 import { LEGAL_DOCS } from "../data/legal";
 
 export default function LegalScreen({
@@ -104,6 +104,72 @@ export default function LegalScreen({
             />
           </button>
         ))}
+
+        <button
+          type="button"
+          onClick={() => {
+            const url = "https://t.me/the_dokhova";
+            const tg = window.Telegram?.WebApp;
+            if (tg?.openTelegramLink) tg.openTelegramLink(url);
+            else window.open(url, "_blank", "noopener,noreferrer");
+          }}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: 18,
+            border: "1px solid var(--surface-border)",
+            borderRadius: "var(--radius-card)",
+            background: "var(--surface)",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <span
+            style={{
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              background: "rgba(240, 169, 60, 0.14)",
+              color: "var(--accent)",
+            }}
+          >
+            <MessageCircle size={20} />
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span
+              style={{
+                display: "block",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+              }}
+            >
+              Написать нам
+            </span>
+            <span
+              style={{
+                display: "block",
+                marginTop: 5,
+                fontSize: 14,
+                lineHeight: 1.4,
+                color: "var(--text-secondary)",
+              }}
+            >
+              Вопросы и обратная связь — в Telegram
+            </span>
+          </span>
+          <ArrowUpRight
+            size={20}
+            color="var(--nav-inactive)"
+            style={{ flexShrink: 0 }}
+          />
+        </button>
       </div>
     </div>
   );

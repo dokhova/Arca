@@ -1,5 +1,6 @@
 import posthog from "posthog-js";
 import type { TarotCard } from "../data/cards";
+import { getCampaignProps, hasCampaign } from "./campaign";
 
 let enabled = false;
 
@@ -15,6 +16,21 @@ export function initAnalytics(): void {
     persistence: "localStorage",
   });
   enabled = true;
+
+  const campaignProps = getCampaignProps();
+  if (Object.keys(campaignProps).length > 0) {
+    posthog.register(campaignProps);
+  }
+  if (hasCampaign()) {
+    try {
+      if (!localStorage.getItem("arca-campaign-landed")) {
+        capture("campaign_landing", campaignProps);
+        localStorage.setItem("arca-campaign-landed", "1");
+      }
+    } catch {
+      // no-op
+    }
+  }
 
   const tg = window.Telegram?.WebApp?.initDataUnsafe?.user;
   if (tg?.id != null) {
