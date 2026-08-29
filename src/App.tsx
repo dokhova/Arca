@@ -69,6 +69,17 @@ export default function App() {
   }, [consented]);
 
   useEffect(() => {
+    if (!consented) return;
+    try {
+      if (localStorage.getItem("arca-write-access-asked")) return;
+      localStorage.setItem("arca-write-access-asked", "1");
+    } catch {
+      return;
+    }
+    window.Telegram?.WebApp?.requestWriteAccess?.();
+  }, [consented]);
+
+  useEffect(() => {
     trackScreen(screen);
   }, [screen]);
 
@@ -100,6 +111,11 @@ export default function App() {
             // Согласие действует в текущей сессии, даже если хранилище недоступно.
           }
           setConsented(true);
+          try {
+            localStorage.setItem("arca-write-access-asked", "1");
+          } catch {
+            // no-op
+          }
           window.Telegram?.WebApp?.requestWriteAccess?.();
         }}
       />
