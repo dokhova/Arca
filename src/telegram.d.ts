@@ -14,6 +14,7 @@ interface TelegramWebApp {
   ready?: () => void;
   expand?: () => void;
   requestFullscreen?: () => void;
+  requestWriteAccess?: (callback?: (granted: boolean) => void) => void;
   onEvent?: (eventType: string, callback: () => void) => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;

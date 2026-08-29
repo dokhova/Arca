@@ -100,6 +100,7 @@ export default function App() {
             // Согласие действует в текущей сессии, даже если хранилище недоступно.
           }
           setConsented(true);
+          window.Telegram?.WebApp?.requestWriteAccess?.();
         }}
       />
     );
