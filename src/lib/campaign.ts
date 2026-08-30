@@ -56,7 +56,13 @@ export function captureCampaignOnLoad(): void {
   if (startParam) {
     props.tg_start_param = startParam;
     const { campaign } = parseStartParam(startParam);
-    if (campaign) props.campaign = campaign;
+    if (campaign) {
+      props.campaign = campaign;
+      // В Mini App нет URL-UTM: дублируем кампанию в стандартные UTM-поля.
+      if (!props.utm_source) props.utm_source = campaign;
+      if (!props.utm_medium) props.utm_medium = "telegram";
+      if (!props.utm_campaign) props.utm_campaign = campaign;
+    }
   }
 
   props.entry_source = startParam ? "telegram" : "web";
