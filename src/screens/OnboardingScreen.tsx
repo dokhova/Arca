@@ -62,7 +62,7 @@ export default function OnboardingScreen({
           display: "flex",
           flexDirection: "column",
           padding:
-            "calc(26px + env(safe-area-inset-top,0px)) 24px calc(30px + env(safe-area-inset-bottom,0px))",
+            "calc(26px + env(safe-area-inset-top,0px) + var(--tg-content-top, 0px)) 24px calc(30px + env(safe-area-inset-bottom,0px))",
         }}
       >
         <div
