@@ -30,7 +30,7 @@ export default function CatalogScreen({
   return (
     <div
       style={{
-        padding: "calc(24px + env(safe-area-inset-top, 0px)) 20px 120px",
+        padding: "calc(24px + env(safe-area-inset-top, 0px) + var(--tg-content-top, 0px)) 20px 120px",
       }}
     >
       <style>{`.catalog-filters::-webkit-scrollbar { display: none; }`}</style>
