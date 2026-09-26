@@ -50,14 +50,23 @@ export default function SpreadChatScreen() {
     positions: string[];
   } | null>(null);
   const [spreadOffer, setSpreadOffer] = useState<SpreadOffer | null>(null);
+  const [quickReplies, setQuickReplies] = useState<string[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
+  const fullReplyRef = useRef<string>("");
+  const typingDoneRef = useRef<(() => void) | undefined>(undefined);
+  const typingActiveRef = useRef(false);
+  const stickToBottomRef = useRef(true);
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (stickToBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: typingText !== null ? "auto" : "smooth",
+      });
+    }
   }, [messages, loading, typingText]);
 
   useEffect(() => {
@@ -66,6 +75,7 @@ export default function SpreadChatScreen() {
       if (typingIntervalRef.current !== null) {
         window.clearInterval(typingIntervalRef.current);
       }
+      typingActiveRef.current = false;
     };
   }, []);
 
@@ -81,12 +91,33 @@ export default function SpreadChatScreen() {
     }
   };
 
+  const finishTyping = () => {
+    if (!typingActiveRef.current) return;
+    typingActiveRef.current = false;
+    if (typingIntervalRef.current !== null) {
+      window.clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+    setMessages((current) => [
+      ...current,
+      { role: "assistant", content: fullReplyRef.current },
+    ]);
+    setTypingText(null);
+    const done = typingDoneRef.current;
+    typingDoneRef.current = undefined;
+    done?.();
+  };
+
   const streamReply = (reply: string, onDone?: () => void) => {
+    fullReplyRef.current = reply;
+    typingDoneRef.current = onDone;
     if (reply.trim() === "") {
       setTypingText(null);
+      typingDoneRef.current = undefined;
       onDone?.();
       return;
     }
+    typingActiveRef.current = true;
     setTypingText("");
     let visibleCharacters = 0;
     typingIntervalRef.current = window.setInterval(() => {
@@ -94,24 +125,20 @@ export default function SpreadChatScreen() {
       visibleCharacters = Math.min(visibleCharacters + chunkSize, reply.length);
       setTypingText(reply.slice(0, visibleCharacters));
       if (visibleCharacters === reply.length) {
-        if (typingIntervalRef.current !== null) {
-          window.clearInterval(typingIntervalRef.current);
-          typingIntervalRef.current = null;
-        }
-        setMessages((current) => [
-          ...current,
-          { role: "assistant", content: reply },
-        ]);
-        setTypingText(null);
-        onDone?.();
+        finishTyping();
       }
     }, 30);
   };
 
   const parseSpreadMarker = (
     raw: string,
-  ): { text: string; offer: SpreadOffer | null } => {
-    const match = raw.match(/\[\[\s*SPREAD\s*:([^\]]*)\]\]/i);
+  ): {
+    text: string;
+    offer: SpreadOffer | null;
+    chips: string[] | null;
+  } => {
+    const spreadMatch = raw.match(/\[\[\s*SPREAD\s*:([^\]]*)\]\]/i);
+    const chipsMatch = raw.match(/\[\[\s*CHIPS\s*:([^\]]*)\]\]/i);
     const cleanMarkdown = (text: string) =>
       text
         .trim()
@@ -119,39 +146,50 @@ export default function SpreadChatScreen() {
         .replace(/\*(.*?)\*/g, "$1")
         .replace(/^#{1,6}\s+/gm, "");
 
-    if (!match) {
-      return { text: cleanMarkdown(raw), offer: null };
+    let offer: SpreadOffer | null = null;
+    if (spreadMatch) {
+      const body = spreadMatch[1].trim();
+      const segments = body.split("|").map((segment) => segment.trim());
+      const optionSegments = body.includes("|") ? segments.slice(1) : segments;
+      let recommended = Number.parseInt(
+        body.includes("|") ? segments[0] : segments[0].split(":", 1)[0],
+        10,
+      );
+      const options = optionSegments.flatMap((segment): SpreadOption[] => {
+        const separatorIndex = segment.indexOf(":");
+        if (separatorIndex === -1) return [];
+        const countText = segment.slice(0, separatorIndex).trim();
+        if (countText === "") return [];
+        const parsedCount = Number(countText);
+        if (!Number.isInteger(parsedCount)) return [];
+        const count = Math.min(10, Math.max(1, parsedCount));
+        const positions = segment
+          .slice(separatorIndex + 1)
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .slice(0, count);
+        return [{ count, positions }];
+      });
+      if (options.length > 0) {
+        if (!options.some((option) => option.count === recommended)) {
+          recommended = options[0].count;
+        }
+        offer = { recommended, options };
+      }
     }
 
-    const body = match[1].trim();
-    const segments = body.split("|").map((segment) => segment.trim());
-    const optionSegments = body.includes("|") ? segments.slice(1) : segments;
-    let recommended = Number.parseInt(
-      body.includes("|") ? segments[0] : segments[0].split(":", 1)[0],
-      10,
-    );
-    const options = optionSegments.flatMap((segment): SpreadOption[] => {
-      const separatorIndex = segment.indexOf(":");
-      if (separatorIndex === -1) return [];
-      const countText = segment.slice(0, separatorIndex).trim();
-      if (countText === "") return [];
-      const parsedCount = Number(countText);
-      if (!Number.isInteger(parsedCount)) return [];
-      const count = Math.min(10, Math.max(1, parsedCount));
-      const positions = segment
-        .slice(separatorIndex + 1)
-        .split(",")
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .slice(0, count);
-      return [{ count, positions }];
-    });
-    const text = cleanMarkdown(raw.replace(match[0], ""));
-    if (options.length === 0) return { text, offer: null };
-    if (!options.some((option) => option.count === recommended)) {
-      recommended = options[0].count;
-    }
-    return { text, offer: { recommended, options } };
+    const parsedChips = chipsMatch?.[1]
+      .split("|")
+      .map((chip) => chip.trim())
+      .filter(Boolean)
+      .slice(0, 6)
+      .map((chip) => chip.slice(0, 30));
+    const chips = parsedChips && parsedChips.length > 0 ? parsedChips : null;
+    let text = raw;
+    if (spreadMatch) text = text.replace(spreadMatch[0], "");
+    if (chipsMatch) text = text.replace(chipsMatch[0], "");
+    return { text: cleanMarkdown(text), offer, chips };
   };
 
   const requestAssistant = async (convo: ChatMessage[]) => {
@@ -160,8 +198,11 @@ export default function SpreadChatScreen() {
       const raw = await sendTarotMessage(convo);
       if (!mountedRef.current) return;
       setLoading(false);
-      const { text, offer } = parseSpreadMarker(raw);
-      streamReply(text, () => setSpreadOffer(offer));
+      const { text, offer, chips } = parseSpreadMarker(raw);
+      streamReply(text, () => {
+        setSpreadOffer(offer);
+        setQuickReplies(chips);
+      });
     } catch {
       if (!mountedRef.current) return;
       setLoading(false);
@@ -179,8 +220,10 @@ export default function SpreadChatScreen() {
     const trimmed = text.trim();
     if (loading || typingText !== null || pendingDraw || (!trimmed && !image))
       return;
+    stickToBottomRef.current = true;
     trackAiChatMessageSent(Boolean(image), trimmed.length);
     setSpreadOffer(null);
+    setQuickReplies(null);
     const userMessage: ChatMessage = { role: "user", content: trimmed, image };
     const next = [...messages, userMessage];
     setMessages(next);
@@ -194,6 +237,7 @@ export default function SpreadChatScreen() {
   };
 
   const handleDrawComplete = async (slugs: string[]) => {
+    stickToBottomRef.current = true;
     const draw = pendingDraw;
     setPendingDraw(null);
     if (!draw) return;
@@ -285,12 +329,16 @@ export default function SpreadChatScreen() {
               window.clearInterval(typingIntervalRef.current);
               typingIntervalRef.current = null;
             }
+            typingActiveRef.current = false;
+            typingDoneRef.current = undefined;
+            fullReplyRef.current = "";
             setMessages([]);
             setInput("");
             setPendingImage(null);
             setTypingText(null);
             setPendingDraw(null);
             setSpreadOffer(null);
+            setQuickReplies(null);
           }}
           disabled={loading}
           style={{
@@ -317,6 +365,11 @@ export default function SpreadChatScreen() {
 
       <div
         className="spread-chat-messages"
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          stickToBottomRef.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+        }}
         style={{
           flex: 1,
           minHeight: 0,
@@ -383,6 +436,8 @@ export default function SpreadChatScreen() {
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             {renderedMessages.map((message, index) => {
               const isUser = message.role === "user";
+              const isTypingMessage =
+                isTyping && index === renderedMessages.length - 1;
 
               if (isUser && message.spread) {
                 const { positions, slugs } = message.spread;
@@ -408,15 +463,22 @@ export default function SpreadChatScreen() {
                             textAlign: "center",
                           }}
                         >
-                          {positions[i] && (
+                          {positions.length > 0 && (
                             <div
                               style={{
+                                display: "flex",
+                                alignItems: "flex-end",
+                                justifyContent: "center",
+                                textAlign: "center",
+                                overflow: "hidden",
                                 marginBottom: 6,
                                 fontSize: 12,
+                                lineHeight: "15px",
+                                height: 30,
                                 color: "var(--text-secondary)",
                               }}
                             >
-                              {positions[i]}
+                              {positions[i] ?? ""}
                             </div>
                           )}
                           <img
@@ -448,12 +510,14 @@ export default function SpreadChatScreen() {
                 return (
                   <div
                     key={`${message.role}-${index}`}
+                    onClick={isTypingMessage ? finishTyping : undefined}
                     style={{
                       width: "100%",
                       color: "var(--text-body)",
                       fontSize: 16,
                       lineHeight: 1.5,
                       overflowWrap: "anywhere",
+                      cursor: isTypingMessage ? "pointer" : undefined,
                     }}
                   >
                     {message.content.split(/\n\n+/).map((paragraph, paragraphIndex) => (
@@ -508,12 +572,44 @@ export default function SpreadChatScreen() {
               );
             })}
 
+            {quickReplies && !pendingDraw && !isTyping && !loading && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "flex-start",
+                  gap: 8,
+                }}
+              >
+                {quickReplies.map((chip, index) => (
+                  <button
+                    key={`${chip}-${index}`}
+                    type="button"
+                    onClick={() => void sendText(chip)}
+                    style={{
+                      padding: "12px 18px",
+                      border:
+                        "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                      borderRadius: 20,
+                      background:
+                        "color-mix(in srgb, var(--accent) 4%, transparent)",
+                      color: "var(--text-secondary)",
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {spreadOffer && !pendingDraw && !isTyping && !loading && (
               <div
                 style={{
                   display: "flex",
                   flexWrap: "wrap",
-                  justifyContent: "center",
+                  justifyContent: "flex-start",
                   gap: 8,
                 }}
               >
@@ -524,6 +620,7 @@ export default function SpreadChatScreen() {
                       key={`${option.count}-${index}`}
                       type="button"
                       onClick={() => {
+                        stickToBottomRef.current = true;
                         setSpreadOffer(null);
                         setPendingDraw({
                           count: option.count,
@@ -801,7 +898,11 @@ export default function SpreadChatScreen() {
               onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              placeholder="Спросите или загрузите…"
+              placeholder={
+                (quickReplies || spreadOffer) && !pendingDraw
+                  ? "Или напиши своё…"
+                  : "Спросите или загрузите…"
+              }
               rows={1}
               style={{
                 flex: 1,

@@ -180,18 +180,22 @@ export default function SpreadDraw({
 
           return (
             <div key={index} style={{ width, flexShrink: 0 }}>
-              {positions?.[index] && (
+              {positions && positions.length > 0 && (
                 <div
                   style={{
-                    marginBottom: 8,
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
                     textAlign: "center",
+                    overflow: "hidden",
+                    marginBottom: 8,
                     fontSize: count > 3 ? 11 : 13,
-                    lineHeight: count > 3 ? 1.2 : undefined,
-                    minHeight: count > 3 ? 27 : undefined,
+                    lineHeight: count > 3 ? "13px" : "16px",
+                    height: count > 3 ? 26 : 32,
                     color: "var(--text-secondary)",
                   }}
                 >
-                  {positions[index]}
+                  {positions[index] ?? ""}
                 </div>
               )}
 
