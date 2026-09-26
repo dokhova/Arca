@@ -59,7 +59,7 @@ export function trackDailyAdviceViewed(card: TarotCard): void {
 export function trackDailyRitualViewed(card: TarotCard): void {
   capture("daily_ritual_viewed", { card_slug: card.slug, card_name: card.name });
 }
-export function trackSpreadCompleted(spreadType: 1 | 3, slugs: string[]): void {
+export function trackSpreadCompleted(spreadType: number, slugs: string[]): void {
   capture("spread_completed", { spread_type: spreadType, cards: slugs });
 }
 export function trackAiChatMessageSent(hasImage: boolean, length: number): void {

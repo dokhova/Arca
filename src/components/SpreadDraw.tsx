@@ -152,7 +152,13 @@ export default function SpreadDraw({
   };
 
   const defaultCardSize =
-    count === 1 ? { width: 120, height: 200 } : { width: 96, height: 160 };
+    count === 1
+      ? { width: 120, height: 200 }
+      : count <= 3
+        ? { width: 96, height: 160 }
+        : count === 4
+          ? { width: 76, height: 127 }
+          : { width: 64, height: 107 };
   const { width, height } = cardSize ?? defaultCardSize;
 
   return (
@@ -160,9 +166,11 @@ export default function SpreadDraw({
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
           justifyContent: "center",
           alignItems: "flex-start",
-          gap: 12,
+          gap: count > 3 ? 8 : 12,
+          rowGap: 12,
           marginTop: 24,
         }}
       >
@@ -177,7 +185,9 @@ export default function SpreadDraw({
                   style={{
                     marginBottom: 8,
                     textAlign: "center",
-                    fontSize: 13,
+                    fontSize: count > 3 ? 11 : 13,
+                    lineHeight: count > 3 ? 1.2 : undefined,
+                    minHeight: count > 3 ? 27 : undefined,
                     color: "var(--text-secondary)",
                   }}
                 >

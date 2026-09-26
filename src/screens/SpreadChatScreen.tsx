@@ -26,6 +26,18 @@ const QUESTION_SUGGESTIONS = [
   "Совет на сегодня",
 ];
 
+type SpreadOption = { count: number; positions: string[] };
+type SpreadOffer = { recommended: number; options: SpreadOption[] };
+
+function plural(count: number) {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "карт";
+  if (lastDigit === 1) return "карта";
+  if (lastDigit >= 2 && lastDigit <= 4) return "карты";
+  return "карт";
+}
+
 export default function SpreadChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -37,6 +49,7 @@ export default function SpreadChatScreen() {
     count: number;
     positions: string[];
   } | null>(null);
+  const [spreadOffer, setSpreadOffer] = useState<SpreadOffer | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -97,28 +110,48 @@ export default function SpreadChatScreen() {
 
   const parseSpreadMarker = (
     raw: string,
-  ): { text: string; draw: { count: number; positions: string[] } | null } => {
-    const match = raw.match(/\[\[\s*SPREAD\s*:\s*(\d)\s*:\s*([^\]]*)\]\]/i);
-    if (!match) {
-      const clean = raw
+  ): { text: string; offer: SpreadOffer | null } => {
+    const match = raw.match(/\[\[\s*SPREAD\s*:([^\]]*)\]\]/i);
+    const cleanMarkdown = (text: string) =>
+      text
         .trim()
         .replace(/\*\*(.*?)\*\*/g, "$1")
         .replace(/\*(.*?)\*/g, "$1")
         .replace(/^#{1,6}\s+/gm, "");
-      return { text: clean, draw: null };
+
+    if (!match) {
+      return { text: cleanMarkdown(raw), offer: null };
     }
-    const count = Math.min(3, Math.max(1, parseInt(match[1], 10) || 1));
-    const positions = match[2]
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .slice(0, count);
-    const text = raw.replace(match[0], "").trim();
-    const clean = text
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/^#{1,6}\s+/gm, "");
-    return { text: clean, draw: { count, positions } };
+
+    const body = match[1].trim();
+    const segments = body.split("|").map((segment) => segment.trim());
+    const optionSegments = body.includes("|") ? segments.slice(1) : segments;
+    let recommended = Number.parseInt(
+      body.includes("|") ? segments[0] : segments[0].split(":", 1)[0],
+      10,
+    );
+    const options = optionSegments.flatMap((segment): SpreadOption[] => {
+      const separatorIndex = segment.indexOf(":");
+      if (separatorIndex === -1) return [];
+      const countText = segment.slice(0, separatorIndex).trim();
+      if (countText === "") return [];
+      const parsedCount = Number(countText);
+      if (!Number.isInteger(parsedCount)) return [];
+      const count = Math.min(10, Math.max(1, parsedCount));
+      const positions = segment
+        .slice(separatorIndex + 1)
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .slice(0, count);
+      return [{ count, positions }];
+    });
+    const text = cleanMarkdown(raw.replace(match[0], ""));
+    if (options.length === 0) return { text, offer: null };
+    if (!options.some((option) => option.count === recommended)) {
+      recommended = options[0].count;
+    }
+    return { text, offer: { recommended, options } };
   };
 
   const requestAssistant = async (convo: ChatMessage[]) => {
@@ -127,8 +160,8 @@ export default function SpreadChatScreen() {
       const raw = await sendTarotMessage(convo);
       if (!mountedRef.current) return;
       setLoading(false);
-      const { text, draw } = parseSpreadMarker(raw);
-      streamReply(text, draw ? () => setPendingDraw(draw) : undefined);
+      const { text, offer } = parseSpreadMarker(raw);
+      streamReply(text, () => setSpreadOffer(offer));
     } catch {
       if (!mountedRef.current) return;
       setLoading(false);
@@ -147,6 +180,7 @@ export default function SpreadChatScreen() {
     if (loading || typingText !== null || pendingDraw || (!trimmed && !image))
       return;
     trackAiChatMessageSent(Boolean(image), trimmed.length);
+    setSpreadOffer(null);
     const userMessage: ChatMessage = { role: "user", content: trimmed, image };
     const next = [...messages, userMessage];
     setMessages(next);
@@ -163,7 +197,7 @@ export default function SpreadChatScreen() {
     const draw = pendingDraw;
     setPendingDraw(null);
     if (!draw) return;
-    trackSpreadCompleted(draw.count as 1 | 3, slugs);
+    trackSpreadCompleted(draw.count, slugs);
     const lines = slugs
       .map((slug, index) => {
         const card = getBySlug(slug);
@@ -256,6 +290,7 @@ export default function SpreadChatScreen() {
             setPendingImage(null);
             setTypingText(null);
             setPendingDraw(null);
+            setSpreadOffer(null);
           }}
           disabled={loading}
           style={{
@@ -472,6 +507,73 @@ export default function SpreadChatScreen() {
                 </div>
               );
             })}
+
+            {spreadOffer && !pendingDraw && !isTyping && !loading && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                {spreadOffer.options.map((option, index) => {
+                  const isRecommended = option.count === spreadOffer.recommended;
+                  return (
+                    <button
+                      key={`${option.count}-${index}`}
+                      type="button"
+                      onClick={() => {
+                        setSpreadOffer(null);
+                        setPendingDraw({
+                          count: option.count,
+                          positions: option.positions,
+                        });
+                      }}
+                      style={{
+                        padding: "12px 18px",
+                        border: isRecommended
+                          ? "1px solid color-mix(in srgb, var(--accent) 55%, transparent)"
+                          : "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                        borderRadius: 20,
+                        background: isRecommended
+                          ? "color-mix(in srgb, var(--accent) 14%, transparent)"
+                          : "color-mix(in srgb, var(--accent) 4%, transparent)",
+                        color: isRecommended
+                          ? "var(--accent)"
+                          : "var(--text-secondary)",
+                        fontSize: 14,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {option.count} {plural(option.count)}
+                      {isRecommended ? " · совет" : ""}
+                    </button>
+                  );
+                })}
+                {!spreadOffer.options.some((option) => option.count > 4) && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void sendText("Хочу более подробный расклад, больше карт")
+                    }
+                    style={{
+                      padding: "12px 18px",
+                      border:
+                        "1px dashed color-mix(in srgb, var(--accent) 55%, transparent)",
+                      borderRadius: 20,
+                      background:
+                        "color-mix(in srgb, var(--accent) 14%, transparent)",
+                      color: "var(--accent)",
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Больше карт
+                  </button>
+                )}
+              </div>
+            )}
 
             {pendingDraw && (
               <div
