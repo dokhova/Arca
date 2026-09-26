@@ -15,12 +15,14 @@ type SpreadDrawProps = {
   count: number;
   positions?: string[];
   cardSize?: { width: number; height: number };
+  availableHeight?: number;
   onComplete?: (slugs: string[]) => void;
   onCardDrawn?: () => void;
 };
 
 const PULL_THRESHOLD = 60;
 const TAP_SLOP = 8;
+const FAN_BLOCK = 16 + 124 + 8 + 18;
 
 const haptic = (style: "light" | "medium") =>
   window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
@@ -89,6 +91,7 @@ export default function SpreadDraw({
   count,
   positions,
   cardSize,
+  availableHeight,
   onComplete,
   onCardDrawn,
 }: SpreadDrawProps) {
@@ -100,6 +103,8 @@ export default function SpreadDraw({
     dx: number;
     dy: number;
   } | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const slotsContainerRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const passedThreshold = useRef(false);
   const fanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +112,16 @@ export default function SpreadDraw({
     new Map<string, ReturnType<typeof setTimeout>>(),
   );
   const completionCalled = useRef(false);
+
+  useEffect(() => {
+    const container = slotsContainerRef.current;
+    if (!container) return;
+    const updateWidth = () => setContainerWidth(container.clientWidth);
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     slots.forEach((slot) => {
@@ -248,7 +263,43 @@ export default function SpreadDraw({
         : count === 4
           ? { width: 76, height: 127 }
           : { width: 64, height: 107 };
-  const { width, height } = cardSize ?? defaultCardSize;
+  const gap = count > 3 ? 8 : 12;
+  const perRow =
+    containerWidth > 0
+      ? Math.max(
+          1,
+          Math.floor(
+            (containerWidth + gap) / (defaultCardSize.width + gap),
+          ),
+        )
+      : count;
+  const rows = Math.ceil(count / perRow);
+  const labelHeight = count > 3 ? 26 : 32;
+  const labelGap = 8;
+  const adaptiveCardSize = (() => {
+    if (availableHeight === undefined || containerWidth === 0) {
+      return defaultCardSize;
+    }
+    const maxCardHeight =
+      (availableHeight -
+        12 -
+        FAN_BLOCK -
+        rows * (labelHeight + labelGap) -
+        (rows - 1) * 12) /
+      rows;
+    const minHeight = count <= 3 ? 110 : 80;
+    const height = Math.round(
+      Math.max(
+        minHeight,
+        Math.min(defaultCardSize.height, maxCardHeight),
+      ),
+    );
+    const width = Math.round(
+      (height * defaultCardSize.width) / defaultCardSize.height,
+    );
+    return { width, height };
+  })();
+  const { width, height } = cardSize ?? adaptiveCardSize;
 
   return (
     <>
@@ -259,14 +310,16 @@ export default function SpreadDraw({
         }
       `}</style>
       <div
+        ref={slotsContainerRef}
         style={{
+          width: "100%",
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
           alignItems: "flex-start",
-          gap: count > 3 ? 8 : 12,
+          gap,
           rowGap: 12,
-          marginTop: 24,
+          marginTop: 12,
         }}
       >
         {Array.from({ length: count }, (_, index) => {
@@ -362,7 +415,7 @@ export default function SpreadDraw({
       {!allDrawn && (
         <div
           style={{
-            margin: "28px auto 0",
+            margin: "16px auto 0",
             textAlign: "center",
           }}
         >
@@ -370,7 +423,7 @@ export default function SpreadDraw({
             style={{
               position: "relative",
               width: 280,
-              height: 150,
+              height: 124,
               margin: "0 auto",
               overflow: "visible",
             }}

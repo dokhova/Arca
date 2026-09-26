@@ -15,7 +15,8 @@ export default function ProfileScreen() {
   return (
     <div
       style={{
-        padding: "calc(24px + env(safe-area-inset-top, 0px) + var(--tg-content-top, 0px)) 20px 120px",
+        padding:
+          "calc(24px + env(safe-area-inset-top, 0px) + var(--tg-content-top, 0px)) 20px calc(var(--nav-height) + 56px + var(--app-safe-bottom))",
       }}
     >
       <h1

@@ -87,7 +87,7 @@ export default function BottomNav({
         WebkitBackdropFilter: "blur(20px)",
         borderTop: "1px solid var(--surface-border)",
         paddingTop: 10,
-        paddingBottom: "calc(10px + env(safe-area-inset-bottom))",
+        paddingBottom: "calc(10px + var(--app-safe-bottom))",
       }}
     >
       {TABS.map(({ id, label, icon: Icon }) => {

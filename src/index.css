@@ -6,6 +6,12 @@
    Менять цвета — только здесь.
    ============================================ */
 :root {
+  --app-safe-bottom: max(
+    env(safe-area-inset-bottom, 0px),
+    var(--tg-safe-bottom, 0px)
+  );
+  --nav-height: 64px;
+
   /* Фон */
   --bg-base: #17100a;
   --bg-glow: rgba(240, 169, 60, 0.35);

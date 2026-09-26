@@ -28,7 +28,13 @@ export default function HomeScreen({
     extra?.ritualText ?? "Проведите несколько минут в тишине, наблюдая за дыханием.";
 
   return (
-    <div style={{ padding: "0 20px", paddingBottom: 120 }}>
+    <div
+      style={{
+        padding: "0 20px",
+        paddingBottom:
+          "calc(var(--nav-height) + 56px + var(--app-safe-bottom))",
+      }}
+    >
       {/* Приветствие — большой отступ сверху, чтобы луна дышала */}
       <header style={{ paddingTop: 180 }}>
         <h1

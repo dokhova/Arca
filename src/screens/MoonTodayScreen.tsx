@@ -58,7 +58,9 @@ export default function MoonTodayScreen({ onBack }: { onBack: () => void }) {
         <ChevronLeft size={24} />
       </button>
 
-      <div style={{ padding: "0 20px 48px" }}>
+      <div
+        style={{ padding: "0 20px calc(48px + var(--app-safe-bottom))" }}
+      >
         {/* Луна с мягким свечением */}
         <div
           style={{

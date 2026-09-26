@@ -23,9 +23,14 @@ tg?.setBottomBarColor?.("#17100A");
 
 function syncTelegramInsets() {
   const top = tg?.contentSafeAreaInset?.top ?? 0;
+  const bottom =
+    (tg?.safeAreaInset?.bottom ?? 0) +
+    (tg?.contentSafeAreaInset?.bottom ?? 0);
   document.documentElement.style.setProperty("--tg-content-top", top + "px");
+  document.documentElement.style.setProperty("--tg-safe-bottom", bottom + "px");
 }
 syncTelegramInsets();
 tg?.onEvent?.("contentSafeAreaChanged", syncTelegramInsets);
 tg?.onEvent?.("safeAreaChanged", syncTelegramInsets);
 tg?.onEvent?.("fullscreenChanged", syncTelegramInsets);
+tg?.onEvent?.("viewportChanged", syncTelegramInsets);

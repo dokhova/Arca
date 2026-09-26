@@ -52,8 +52,12 @@ export default function SpreadChatScreen() {
   const [spreadOffer, setSpreadOffer] = useState<SpreadOffer | null>(null);
   const [quickReplies, setQuickReplies] = useState<string[] | null>(null);
   const [otherMode, setOtherMode] = useState(false);
+  const [availableDrawHeight, setAvailableDrawHeight] = useState<
+    number | undefined
+  >(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const drawRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
@@ -72,12 +76,30 @@ export default function SpreadChatScreen() {
   }, [messages, loading, typingText]);
 
   useEffect(() => {
-    if (!pendingDraw) return;
+    if (!pendingDraw) {
+      setAvailableDrawHeight(undefined);
+      return;
+    }
     stickToBottomRef.current = false;
+    const updateAvailableHeight = () => {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+      const paddingTop = Number.parseFloat(
+        window.getComputedStyle(container).paddingTop,
+      );
+      setAvailableDrawHeight(
+        Math.max(0, container.clientHeight - paddingTop),
+      );
+    };
+    updateAvailableHeight();
+    window.addEventListener("resize", updateAvailableHeight);
     const frame = window.requestAnimationFrame(() => {
-      drawRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      drawRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateAvailableHeight);
+    };
   }, [pendingDraw]);
 
   useEffect(() => {
@@ -298,7 +320,8 @@ export default function SpreadChatScreen() {
         flexDirection: "column",
         height: "100dvh",
         boxSizing: "border-box",
-        padding: "0 16px calc(85px + env(safe-area-inset-bottom, 0px))",
+        padding:
+          "0 16px calc(var(--nav-height) + 20px + var(--app-safe-bottom))",
       }}
     >
       <style>{`
@@ -377,6 +400,7 @@ export default function SpreadChatScreen() {
       )}
 
       <div
+        ref={messagesContainerRef}
         className="spread-chat-messages"
         onScroll={(event) => {
           const element = event.currentTarget;
@@ -723,6 +747,7 @@ export default function SpreadChatScreen() {
               >
                 <SpreadDraw
                   count={pendingDraw.count}
+                  availableHeight={availableDrawHeight}
                   positions={
                     pendingDraw.positions.length
                       ? pendingDraw.positions
@@ -768,11 +793,12 @@ export default function SpreadChatScreen() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div
-        style={{
-          flexShrink: 0,
-        }}
-      >
+      {!pendingDraw && (
+        <div
+          style={{
+            flexShrink: 0,
+          }}
+        >
         {pendingImage && (
           <div
             style={{
@@ -995,7 +1021,8 @@ export default function SpreadChatScreen() {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

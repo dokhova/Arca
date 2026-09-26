@@ -123,7 +123,7 @@ export default function CardDetailScreen({
             position: "relative",
             zIndex: 2,
             marginTop: -96,
-            padding: "0 20px 40px",
+            padding: "0 20px calc(40px + var(--app-safe-bottom))",
           }}
         >
         <h1
