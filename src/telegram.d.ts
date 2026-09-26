@@ -20,6 +20,11 @@ interface TelegramWebApp {
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
   setBottomBarColor?: (color: string) => void;
+  HapticFeedback?: {
+    impactOccurred: (
+      style: "light" | "medium" | "heavy" | "rigid" | "soft",
+    ) => void;
+  };
 }
 
 interface Window {

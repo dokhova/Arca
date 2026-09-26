@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { cards, getBySlug } from "../data/cards";
 import { cardImage } from "../data/daily";
 
@@ -9,7 +16,14 @@ type SpreadDrawProps = {
   positions?: string[];
   cardSize?: { width: number; height: number };
   onComplete?: (slugs: string[]) => void;
+  onCardDrawn?: () => void;
 };
+
+const PULL_THRESHOLD = 60;
+const TAP_SLOP = 8;
+
+const haptic = (style: "light" | "medium") =>
+  window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
 
 function CardBack({ style }: { style?: CSSProperties }) {
   const maskId = useId();
@@ -76,9 +90,18 @@ export default function SpreadDraw({
   positions,
   cardSize,
   onComplete,
+  onCardDrawn,
 }: SpreadDrawProps) {
   const [slots, setSlots] = useState<SpreadDrawSlot[]>([]);
   const [leavingFanCard, setLeavingFanCard] = useState<number | null>(null);
+  const [leaveOffset, setLeaveOffset] = useState({ dx: 0, dy: 0 });
+  const [drag, setDrag] = useState<{
+    index: number;
+    dx: number;
+    dy: number;
+  } | null>(null);
+  const dragStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const passedThreshold = useRef(false);
   const fanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealTimers = useRef(
     new Map<string, ReturnType<typeof setTimeout>>(),
@@ -148,7 +171,73 @@ export default function SpreadDraw({
         ...current,
         { slug: card.slug, revealed: false },
       ]);
+      onCardDrawn?.();
     }
+  };
+
+  const handlePointerDown = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (leavingFanCard !== null || allDrawn) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+      id: event.pointerId,
+    };
+    passedThreshold.current = false;
+    setDrag({ index, dx: 0, dy: 0 });
+  };
+
+  const handlePointerMove = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    const start = dragStart.current;
+    if (!start || start.id !== event.pointerId) return;
+    const dx = event.clientX - start.x;
+    const dy = Math.min(24, event.clientY - start.y);
+    if (dy < -PULL_THRESHOLD && !passedThreshold.current) {
+      passedThreshold.current = true;
+      haptic("light");
+    } else if (dy >= -PULL_THRESHOLD && passedThreshold.current) {
+      passedThreshold.current = false;
+    }
+    setDrag({ index, dx, dy });
+  };
+
+  const handlePointerUp = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    const start = dragStart.current;
+    if (!drag || drag.index !== index || !start || start.id !== event.pointerId)
+      return;
+    const dx = event.clientX - start.x;
+    const dy = Math.min(24, event.clientY - start.y);
+    const distance = Math.hypot(dx, dy);
+    dragStart.current = null;
+    passedThreshold.current = false;
+
+    if (dy < -PULL_THRESHOLD) {
+      setLeaveOffset({ dx, dy });
+      setDrag(null);
+      selectFanCard(index);
+      haptic("medium");
+    } else if (distance < TAP_SLOP) {
+      setLeaveOffset({ dx: 0, dy: 0 });
+      setDrag(null);
+      selectFanCard(index);
+    } else {
+      setDrag(null);
+    }
+  };
+
+  const handlePointerCancel = () => {
+    dragStart.current = null;
+    passedThreshold.current = false;
+    setDrag(null);
   };
 
   const defaultCardSize =
@@ -163,6 +252,12 @@ export default function SpreadDraw({
 
   return (
     <>
+      <style>{`
+        @keyframes spread-draw-pull-hint {
+          0%, 70%, 100% { transform: translateY(0); }
+          82% { transform: translateY(-8px); }
+        }
+      `}</style>
       <div
         style={{
           display: "flex",
@@ -277,11 +372,24 @@ export default function SpreadDraw({
               width: 280,
               height: 150,
               margin: "0 auto",
+              overflow: "visible",
             }}
           >
             {[-24, -16, -8, 0, 8, 16, 24].map((rotation, index) => {
               const offset = (index - 3) * 26;
               const isLeaving = leavingFanCard === index;
+              const activeDrag = drag?.index === index ? drag : null;
+              const pullProgress = activeDrag
+                ? Math.min(
+                    1,
+                    Math.max(0, -activeDrag.dy / PULL_THRESHOLD),
+                  )
+                : 0;
+              const transform = activeDrag
+                ? `translateX(${offset + activeDrag.dx}px) translateY(${activeDrag.dy}px) rotate(${rotation * (1 - pullProgress)}deg) scale(${1 + 0.08 * pullProgress})`
+                : isLeaving
+                  ? `translateX(${offset + leaveOffset.dx}px) translateY(${leaveOffset.dy - 60}px) rotate(0deg) scale(1.08)`
+                  : `translateX(${offset}px) translateY(0) rotate(${rotation}deg)`;
 
               return (
                 <button
@@ -289,7 +397,10 @@ export default function SpreadDraw({
                   type="button"
                   aria-label={`Вытянуть карту ${index + 1}`}
                   disabled={leavingFanCard !== null}
-                  onClick={() => selectFanCard(index)}
+                  onPointerDown={(event) => handlePointerDown(event, index)}
+                  onPointerMove={(event) => handlePointerMove(event, index)}
+                  onPointerUp={(event) => handlePointerUp(event, index)}
+                  onPointerCancel={handlePointerCancel}
                   style={{
                     position: "absolute",
                     left: "50%",
@@ -301,13 +412,36 @@ export default function SpreadDraw({
                     border: "none",
                     background: "transparent",
                     cursor: leavingFanCard === null ? "pointer" : "default",
+                    touchAction: "none",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
                     transformOrigin: "bottom center",
-                    transform: `translateX(${offset}px) translateY(${isLeaving ? -16 : 0}px) rotate(${rotation}deg)`,
+                    transform,
                     opacity: isLeaving ? 0 : 1,
-                    transition: "transform 0.25s, opacity 0.25s",
+                    transition: activeDrag
+                      ? "none"
+                      : "transform 0.25s, opacity 0.25s",
+                    zIndex: activeDrag ? 10 : undefined,
+                    filter: activeDrag
+                      ? `drop-shadow(0 0 ${12 * pullProgress}px color-mix(in srgb, var(--accent) 60%, transparent))`
+                      : undefined,
                   }}
                 >
-                  <CardBack style={{ pointerEvents: "none" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      animation:
+                        index === 3 &&
+                        drawnCount === 0 &&
+                        drag === null &&
+                        leavingFanCard === null
+                          ? "spread-draw-pull-hint 2.5s ease-in-out infinite"
+                          : undefined,
+                    }}
+                  >
+                    <CardBack style={{ pointerEvents: "none" }} />
+                  </div>
                 </button>
               );
             })}
@@ -319,7 +453,7 @@ export default function SpreadDraw({
               color: "var(--text-secondary)",
             }}
           >
-            Вытяните карту
+            Потяни карту вверх
           </div>
         </div>
       )}

@@ -55,6 +55,7 @@ export default function SpreadChatScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const drawRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const fullReplyRef = useRef<string>("");
   const typingDoneRef = useRef<(() => void) | undefined>(undefined);
@@ -69,6 +70,15 @@ export default function SpreadChatScreen() {
       });
     }
   }, [messages, loading, typingText]);
+
+  useEffect(() => {
+    if (!pendingDraw) return;
+    stickToBottomRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      drawRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingDraw]);
 
   useEffect(() => {
     return () => {
@@ -700,11 +710,15 @@ export default function SpreadChatScreen() {
 
             {pendingDraw && (
               <div
+                ref={drawRef}
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 16,
+                  scrollMarginTop:
+                    "calc(env(safe-area-inset-top, 0px) + 72px + var(--tg-content-top, 0px))",
+                  scrollMarginBottom: 16,
                 }}
               >
                 <SpreadDraw
@@ -715,6 +729,12 @@ export default function SpreadChatScreen() {
                       : undefined
                   }
                   onComplete={handleDrawComplete}
+                  onCardDrawn={() =>
+                    drawRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "nearest",
+                    })
+                  }
                 />
               </div>
             )}
