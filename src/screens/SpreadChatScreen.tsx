@@ -51,6 +51,7 @@ export default function SpreadChatScreen() {
   } | null>(null);
   const [spreadOffer, setSpreadOffer] = useState<SpreadOffer | null>(null);
   const [quickReplies, setQuickReplies] = useState<string[] | null>(null);
+  const [otherMode, setOtherMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -224,6 +225,7 @@ export default function SpreadChatScreen() {
     trackAiChatMessageSent(Boolean(image), trimmed.length);
     setSpreadOffer(null);
     setQuickReplies(null);
+    setOtherMode(false);
     const userMessage: ChatMessage = { role: "user", content: trimmed, image };
     const next = [...messages, userMessage];
     setMessages(next);
@@ -339,6 +341,7 @@ export default function SpreadChatScreen() {
             setPendingDraw(null);
             setSpreadOffer(null);
             setQuickReplies(null);
+            setOtherMode(false);
           }}
           disabled={loading}
           style={{
@@ -581,26 +584,49 @@ export default function SpreadChatScreen() {
                   gap: 8,
                 }}
               >
-                {quickReplies.map((chip, index) => (
-                  <button
-                    key={`${chip}-${index}`}
-                    type="button"
-                    onClick={() => void sendText(chip)}
-                    style={{
-                      padding: "12px 18px",
-                      border:
-                        "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
-                      borderRadius: 20,
-                      background:
-                        "color-mix(in srgb, var(--accent) 4%, transparent)",
-                      color: "var(--text-secondary)",
-                      fontSize: 14,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {chip}
-                  </button>
-                ))}
+                {quickReplies
+                  .filter((chip) => chip.toLowerCase() !== "другое")
+                  .map((chip, index) => (
+                    <button
+                      key={`${chip}-${index}`}
+                      type="button"
+                      onClick={() => void sendText(chip)}
+                      style={{
+                        padding: "12px 18px",
+                        border:
+                          "1px solid color-mix(in srgb, var(--accent) 16%, transparent)",
+                        borderRadius: 20,
+                        background:
+                          "color-mix(in srgb, var(--accent) 4%, transparent)",
+                        color: "var(--text-secondary)",
+                        fontSize: 14,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickReplies(null);
+                    setOtherMode(true);
+                    inputRef.current?.focus();
+                  }}
+                  style={{
+                    padding: "12px 18px",
+                    border:
+                      "1px dashed color-mix(in srgb, var(--accent) 55%, transparent)",
+                    borderRadius: 20,
+                    background:
+                      "color-mix(in srgb, var(--accent) 14%, transparent)",
+                    color: "var(--accent)",
+                    fontSize: 14,
+                    cursor: "pointer",
+                  }}
+                >
+                  Другое
+                </button>
               </div>
             )}
 
@@ -899,7 +925,9 @@ export default function SpreadChatScreen() {
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               placeholder={
-                (quickReplies || spreadOffer) && !pendingDraw
+                otherMode
+                  ? "Напиши, что тебя волнует…"
+                  : (quickReplies || spreadOffer) && !pendingDraw
                   ? "Или напиши своё…"
                   : "Спросите или загрузите…"
               }
