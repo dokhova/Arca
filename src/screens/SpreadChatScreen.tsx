@@ -486,6 +486,7 @@ export default function SpreadChatScreen() {
                       display: "flex",
                       justifyContent: "center",
                       flexWrap: "wrap",
+                      alignItems: "flex-start",
                       gap: 10,
                     }}
                   >
@@ -518,19 +519,37 @@ export default function SpreadChatScreen() {
                               {positions[i] ?? ""}
                             </div>
                           )}
-                          <img
-                            src={cardImage(card)}
-                            alt={card.name}
+                          <div
                             style={{
                               width: "100%",
+                              aspectRatio: "640 / 1150",
                               borderRadius: 10,
-                              display: "block",
+                              overflow: "hidden",
                             }}
-                          />
+                          >
+                            <img
+                              src={cardImage(card)}
+                              alt={card.name}
+                              style={{
+                                display: "block",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                objectPosition: "50% 50%",
+                                maxWidth: "none",
+                              }}
+                            />
+                          </div>
                           <div
                             style={{
                               marginTop: 6,
                               fontSize: 12,
+                              lineHeight: "15px",
+                              height: 30,
+                              overflow: "hidden",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
                               color: "var(--text-primary)",
                             }}
                           >
